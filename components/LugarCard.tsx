@@ -3,14 +3,15 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { CATEGORIAS_MAP } from '@/constants/categories';
 import { formatPrecio } from '@/lib/distance';
-import type { Panorama } from '@/lib/types';
+import type { Lugar } from '@/lib/types';
 import { useFavoritesStore } from '@/stores/useFavoritesStore';
 
 type Props = {
-  panorama: Panorama;
+  lugar: Lugar;
   onPress: () => void;
   badge?: string;
   size?: 'medium' | 'large' | 'small';
+  fullWidth?: boolean;
 };
 
 const SIZES = {
@@ -19,22 +20,31 @@ const SIZES = {
   large: { width: 300, height: 240 },
 };
 
-export function PanoramaCardAirbnb({ panorama, onPress, badge, size = 'medium' }: Props) {
-  const esFavorito = useFavoritesStore((s) => s.esFavorito(panorama.id));
+function formatFecha(iso?: string | null) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+}
+
+export function LugarCard({ lugar, onPress, badge, size = 'medium', fullWidth = false }: Props) {
+  const esFavorito = useFavoritesStore((s) => s.esFavorito(lugar.id));
   const toggleFav = useFavoritesStore((s) => s.toggle);
-  const cat = CATEGORIAS_MAP[panorama.categoria];
+  const cat = CATEGORIAS_MAP[lugar.categoria];
   const dims = SIZES[size];
+  const cardWidth = fullWidth ? '100%' : dims.width;
 
   const onHeart = (e: any) => {
     e.stopPropagation?.();
-    toggleFav(panorama);
+    toggleFav(lugar);
   };
 
+  const fechaTxt = lugar.tipo === 'panorama' ? formatFecha(lugar.fecha_inicio) : null;
+
   return (
-    <Pressable onPress={onPress} style={[styles.card, { width: dims.width }]}>
+    <Pressable onPress={onPress} style={[styles.card, { width: cardWidth as any }, !fullWidth && { marginRight: 14 }]}>
       <View style={[styles.imagenWrap, { height: dims.height }]}>
         <Image
-          source={panorama.imagen_url ? { uri: panorama.imagen_url } : undefined}
+          source={lugar.imagen_url ? { uri: lugar.imagen_url } : undefined}
           style={styles.imagen}
           contentFit="cover"
           placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
@@ -42,6 +52,12 @@ export function PanoramaCardAirbnb({ panorama, onPress, badge, size = 'medium' }
         {badge && (
           <View style={styles.badge}>
             <Text style={styles.badgeTxt}>{badge}</Text>
+          </View>
+        )}
+        {fechaTxt && (
+          <View style={styles.fechaBadge}>
+            <Ionicons name="calendar" size={11} color="#fff" />
+            <Text style={styles.fechaBadgeTxt}>{fechaTxt}</Text>
           </View>
         )}
         <Pressable onPress={onHeart} hitSlop={10} style={styles.heart}>
@@ -55,24 +71,24 @@ export function PanoramaCardAirbnb({ panorama, onPress, badge, size = 'medium' }
       <View style={styles.info}>
         <View style={styles.row}>
           <Text style={styles.nombre} numberOfLines={1}>
-            {panorama.nombre}
+            {lugar.nombre}
           </Text>
           <View style={[styles.catDot, { backgroundColor: cat.color }]} />
         </View>
-        {panorama.direccion && (
+        {lugar.direccion && (
           <Text style={styles.direccion} numberOfLines={1}>
-            {panorama.direccion}
+            {lugar.direccion}
           </Text>
         )}
         <View style={styles.row}>
           <Text style={styles.precio}>
-            {formatPrecio(panorama.precio_nivel)} · {cat.nombre}
+            {formatPrecio(lugar.precio_nivel)} · {cat.nombre}
           </Text>
-          {panorama.total_reviews != null && panorama.total_reviews > 0 && (
+          {lugar.total_reviews != null && lugar.total_reviews > 0 && (
             <View style={styles.ratingInline}>
               <Ionicons name="star" size={12} color="#FFB400" />
               <Text style={styles.ratingTxt}>
-                {Number(panorama.rating_promedio ?? 0).toFixed(1)}
+                {Number(lugar.rating_promedio ?? 0).toFixed(1)}
               </Text>
             </View>
           )}
@@ -83,7 +99,7 @@ export function PanoramaCardAirbnb({ panorama, onPress, badge, size = 'medium' }
 }
 
 const styles = StyleSheet.create({
-  card: { marginRight: 14 },
+  card: {},
   imagenWrap: {
     borderRadius: 14,
     overflow: 'hidden',
@@ -101,6 +117,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   badgeTxt: { fontSize: 11, fontWeight: '700', color: '#111' },
+  fechaBadge: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E94F37',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  fechaBadgeTxt: { fontSize: 11, fontWeight: '700', color: '#fff' },
   heart: {
     position: 'absolute',
     top: 10,
@@ -121,3 +150,6 @@ const styles = StyleSheet.create({
   ratingInline: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   ratingTxt: { fontSize: 12, color: '#111', fontWeight: '700' },
 });
+
+/** Alias compatibilidad. Deprecated. */
+export const PanoramaCardAirbnb = LugarCard;

@@ -1,19 +1,31 @@
 # magical-planet
 
-App móvil y web para descubrir **panoramas** (actividades, lugares, experiencias) cerca de ti. Estilo visual inspirado en Airbnb. Arranque enfocado en Santiago de Chile.
+Plataforma web + mobile para **descubrir turismo** en Chile. Arranque enfocado en Santiago. Dos mundos: **lugares turísticos** (museos, parques, monumentos, restaurantes) y **panoramas** (eventos casuales con fecha).
 
 **Producción:** https://magical-planet.vercel.app
 
 ## Features
 
-- **Onboarding** de 3 pasos: categorías de interés, radio de búsqueda, tipo de compañía (solo, pareja, familia, amigos).
-- **Home airbnb-style**: pill search, tabs segmented de categorías, carousels horizontales por sección ("Cerca de ti", "Basado en tus intereses", "Favoritos entre usuarios"), grid responsive "Disponibles ahora" (1 a 4 columnas según ancho).
-- **Favoritos**: local (AsyncStorage) para anónimos; **sincronizados** a Supabase para usuarios logueados (merge automático al iniciar sesión).
-- **Login Google** vía Supabase Auth + `expo-auth-session`.
-- **Publicar panorama** (solo logueados): nombre, descripción, categoría, precio, imagen (Storage), ubicación actual. Moderación manual antes de aparecer al público.
-- **Reviews**: rating 1-5 estrellas + comentario. Cada usuario una reseña por panorama. Agregado visible en cards + detalle.
-- **Filtros avanzados**: categorías, radio, precio (solo gratis / rango min-max), calificación mínima.
-- **Mapa** fullscreen accesible desde FAB, con marcadores por categoría.
+### Navegación (5 tabs)
+- **Inicio** — dashboard con saludo, bloque destacado zona, carousels "Cerca ti", "Próximos panoramas", "Destacados", "Recién agregados".
+- **Explorar** — lugares turísticos con búsqueda full-text, filtros, grid responsive 1-4 columnas, paginación infinite scroll.
+- **Mapa** — Leaflet + OpenStreetMap en web, react-native-maps en mobile, markers por categoría, filtros tipo (turístico/panorama/todos), popup clickable.
+- **Panoramas** — eventos y actividades casuales con fecha, próximos de la semana, favoritos comunidad, lista completa.
+- **Perfil** — login Google, favoritos count, modal preferencias (intereses/radio/compañía), publicar, logout.
+
+### Contenido
+- **Publicar** (auth-gated): selector tipo (turístico o panorama), hasta 5 fotos, pin manual en mini-mapa, fechas evento, categorías, precio, moderación obligatoria.
+- **Favoritos**: local anónimos, sync Supabase para logueados con merge automático al login.
+- **Reviews**: 1-5 estrellas + comentario, filtros (recientes / mejores / N+ estrellas), 1 por user/lugar.
+- **Detalle lugar**: galería swipeable, "Cómo llegar" (Maps/Uber/Transantiago), tiempos estimados (caminando/bici/auto), lugares similares, más del mismo creador.
+
+### Filtros
+- Categorías (6), radio (5-20000 km), precio (solo gratis / rango min-max), rating mínimo, tags emergentes (pet-friendly, LGBT+, accesible, wifi, terraza, A/C, etc.).
+
+### Onboarding
+- 3 pasos opcionales: intereses + radio + compañía (solo/pareja/familia/amigos). Primera vez. Editable en Perfil.
+- Demo mode con datos mock para guest sin login.
+- Coach-marks first-time dismissible en Inicio.
 
 ## Stack
 
@@ -23,15 +35,16 @@ App móvil y web para descubrir **panoramas** (actividades, lugares, experiencia
 | Routing | expo-router 6 (file-based) |
 | Estado | Zustand + persist (AsyncStorage) |
 | Backend | Supabase (PostgreSQL + PostGIS + Auth + Storage) |
-| Mapas | react-native-maps + fallback web |
-| Deploy web | Vercel |
+| Mapas web | Leaflet + OpenStreetMap (gratis ilimitado) |
+| Mapas mobile | react-native-maps |
+| Deploy | Vercel |
 
 ## Requisitos
 
-- **Node.js ≥ 20** (Metro rompe con 18; usar `nvm use 22.10.0` si tenés nvm)
+- **Node.js ≥ 20** (Metro rompe con 18)
 - **npm** o **pnpm**
-- Cuenta Supabase (URL + anon key)
-- Para mobile: Expo Go app o build nativo
+- Cuenta Supabase
+- Mobile: Expo Go o build EAS
 
 ## Setup local
 
@@ -41,45 +54,41 @@ cd magical-planet
 nvm use 22.10.0
 npm install
 cp .env.example .env
-# Editar .env con tus credenciales Supabase
+# editar .env con credenciales Supabase
 ```
 
-### Variables de entorno (`.env`)
+### `.env`
 
 ```env
-EXPO_PUBLIC_SUPABASE_URL=https://<tu-proyecto>.supabase.co
+EXPO_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 ```
 
 ## Base de datos (Supabase)
 
 1. Crear proyecto en https://supabase.com
-2. Ir a **SQL Editor** y ejecutar en orden:
-   - [`supabase/schema.sql`](supabase/schema.sql) — tablas, RPCs, RLS, triggers
-   - [`supabase/seed.sql`](supabase/seed.sql) — ~30 panoramas de Santiago + UPDATE para marcarlos moderados
-3. **Storage**: Dashboard → Storage → **New bucket** `panoramas-imagenes` público. Policy INSERT = authenticated, SELECT = public.
-4. **Google OAuth** (para publicar panoramas):
-   - Google Cloud Console → Credentials → OAuth 2.0 Client ID (Web)
-     - Redirect URI: `https://<ref>.supabase.co/auth/v1/callback`
-   - Supabase → Authentication → Providers → **Google**: enable + pegar Client ID + Secret
-   - **Additional redirect URLs**: `magicalplanet://auth/callback`, `https://<tu-dominio-vercel>/auth/callback`
+2. SQL Editor → ejecutar en orden:
+   - [`supabase/schema.sql`](supabase/schema.sql) — tablas, RPCs, RLS, triggers, índices
+   - [`supabase/seed.sql`](supabase/seed.sql) — ~30 lugares Santiago + UPDATE moderado=true + tipo=turistico
+3. Storage → New bucket `panoramas-imagenes` público
+4. **Google OAuth** para publicar:
+   - Google Cloud Console → OAuth 2.0 Client ID (Web) → redirect `https://<ref>.supabase.co/auth/v1/callback`
+   - Supabase Auth → Providers → Google: enable + Client ID + Secret
+   - Auth URL Configuration → Additional redirect URLs: `magicalplanet://auth/callback` + dominio Vercel
 
 ## Run
 
 ```bash
-# Web
-npx expo start --web
-
-# Mobile (requiere Expo Go o build)
+npx expo start --web        # http://localhost:8081
 npx expo start --android
 npx expo start --ios
 ```
 
 ## Build + Deploy web (Vercel)
 
-Config ya está en [`vercel.json`](vercel.json).
+Config en [`vercel.json`](vercel.json). Push a `main` = auto-redeploy.
 
-### Via CLI
+### CLI
 
 ```bash
 npx vercel link
@@ -88,74 +97,97 @@ npx vercel env add EXPO_PUBLIC_SUPABASE_ANON_KEY production
 npx vercel --prod
 ```
 
-### Via Dashboard
+### Dashboard
 
-1. Importar repo en https://vercel.com/new
-2. Framework Preset: **Other**
-3. Agregar env vars `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY` (Production, Preview, Development)
-4. Deploy
-
-Push a `main` = auto-redeploy.
+https://vercel.com/new → importar repo → framework **Other** → agregar env vars → deploy.
 
 ## Estructura
 
 ```
 magical-planet/
-├── app/                        # Rutas Expo Router (file-based)
-│   ├── (onboarding)/           # welcome → intereses → radio → compania
-│   ├── (tabs)/                 # index (home), favorites, perfil
-│   ├── auth/                   # login, callback
-│   ├── seccion/[tipo].tsx     # grid de todos los panoramas de una sección
-│   ├── panorama/[id].tsx      # detalle + reviews
-│   ├── crear-panorama.tsx     # publicar
-│   └── filters.tsx             # modal filtros
-├── components/                 # PanoramaCardAirbnb, RatingStars, MapaPanoramas
-├── constants/categories.ts     # 6 categorías fijas
-├── hooks/                      # useNearbyPanoramas, useTopFavoritos, useReviews
-├── lib/                        # supabase.ts, types.ts, distance.ts
-├── stores/                     # Zustand: auth, favorites, filters, location, onboarding
+├── app/                          # Rutas Expo Router
+│   ├── (onboarding)/             # welcome → intereses → radio → compania
+│   ├── (tabs)/                   # inicio, explorar, mapa, panoramas, perfil
+│   ├── auth/                     # login, callback
+│   ├── lugar/[id].tsx            # detalle con galería + reviews + similares
+│   ├── seccion/[tipo].tsx        # grid responsive por tipo
+│   ├── crear-lugar.tsx           # publicar (auth-gated)
+│   └── filters.tsx               # modal filtros
+├── components/
+│   ├── LugarCard.tsx             # card universal
+│   ├── MapaLeaflet.tsx/.web.tsx  # mapa (mobile/web)
+│   ├── MiniMapaPicker.tsx/.web.tsx  # pin manual crear
+│   ├── CoachMark.tsx             # tooltip first-time
+│   ├── Skeleton.tsx              # loading placeholders
+│   ├── WelcomeCTA.tsx            # banner login guests
+│   ├── RatingStars.tsx
+│   ├── SectionHeader.tsx
+│   └── CategoryChip.tsx
+├── constants/
+│   ├── categories.ts             # 6 categorías fijas
+│   └── tags.ts                   # 10 tags emergentes
+├── hooks/
+│   ├── useNearbyLugares.ts       # búsqueda + paginación
+│   ├── useTopFavoritos.ts
+│   ├── usePanoramasProximos.ts
+│   ├── useRecientes.ts
+│   ├── useLugaresSimilares.ts
+│   ├── useLugaresCreador.ts
+│   └── useReviews.ts
+├── lib/
+│   ├── supabase.ts
+│   ├── types.ts                  # Lugar, Review, Filtros, TipoLugar
+│   ├── distance.ts
+│   └── demoLugares.ts            # mock data A.2
+├── stores/                       # Zustand
+│   ├── useAuthStore.ts
+│   ├── useFavoritesStore.ts
+│   ├── useFiltersStore.ts
+│   ├── useLocationStore.ts
+│   └── useOnboardingStore.ts
 ├── supabase/
-│   ├── schema.sql              # consolidado (ejecutar en reset)
-│   ├── seed.sql                # panoramas demo Santiago
-│   └── migrations/             # 002_publish_and_users, 003_reviews
-├── app.json                    # config Expo
-└── vercel.json                 # config deploy
+│   ├── schema.sql                # consolidado (ejecutar fresh)
+│   ├── seed.sql
+│   └── migrations/               # 002, 003, 004, 005
+├── app.json
+└── vercel.json
 ```
 
-## Comandos útiles
+## Comandos
 
 ```bash
-npm start                       # Expo dev server
+npm start                       # Expo dev
 npx expo lint                   # lint
 npx tsc --noEmit                # typecheck
 npx expo export --platform web  # build web
-npx vercel --prod               # deploy prod
+npx vercel --prod               # deploy
 ```
 
-## Reset de BD (destructivo)
-
-Para empezar desde cero, ejecutar en **SQL Editor** de Supabase:
+## Reset BD (destructivo)
 
 ```sql
-drop function if exists public.panoramas_cerca cascade;
-drop function if exists public.panoramas_top_favoritos cascade;
+drop function if exists public.lugares_cerca cascade;
+drop function if exists public.lugares_top_favoritos cascade;
+drop function if exists public.panoramas_proximos cascade;
 drop function if exists public.touch_updated_at cascade;
 drop table if exists public.reviews cascade;
 drop table if exists public.favoritos cascade;
-drop table if exists public.panoramas cascade;
+drop table if exists public.lugar_imagenes cascade;
+drop table if exists public.lugares cascade;
+drop type if exists tipo_lugar cascade;
 delete from storage.objects where bucket_id = 'panoramas-imagenes';
 delete from storage.buckets where id = 'panoramas-imagenes';
 ```
 
-Luego re-ejecutar `supabase/schema.sql` y `supabase/seed.sql`.
+Luego re-ejecutar `schema.sql` + `seed.sql`.
 
 ## Roadmap
 
-Ver [MEJORAS.md](MEJORAS.md) — plan de 20 mejoras propuestas para próximas iteraciones.
+Ver [MEJORAS.md](MEJORAS.md) — 50 mejoras priorizables por categoría.
 
-## Documentación para contribuir
+## Contexto técnico para contribuir
 
-Ver [CLAUDE.md](CLAUDE.md) — contexto técnico completo: convenciones, pitfalls, patterns, comandos.
+Ver [CLAUDE.md](CLAUDE.md) — convenciones, pitfalls, patrones, hooks, componentes.
 
 ## Licencia
 

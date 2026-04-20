@@ -2,7 +2,7 @@
 -- ~30 panoramas distribuidos por categoría.
 -- Ejecutar después de schema.sql.
 
-insert into panoramas (nombre, descripcion, categoria, precio_nivel, direccion, imagen_url, location) values
+insert into lugares (nombre, descripcion, categoria, precio_nivel, direccion, imagen_url, location) values
 -- Aire libre
 ('Cerro San Cristóbal', 'Parque metropolitano con funicular, mirador y piscinas.', 'aire_libre', 0, 'Pío Nono, Recoleta', 'https://images.unsplash.com/photo-1544077960-604201fe74bc?w=800', st_makepoint(-70.6297, -33.4256)::geography),
 ('Parque Bicentenario', 'Parque urbano con lagunas, flamencos y áreas de picnic.', 'aire_libre', 0, 'Av. Bicentenario 3800, Vitacura', 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800', st_makepoint(-70.5857, -33.3977)::geography),
@@ -46,4 +46,8 @@ insert into panoramas (nombre, descripcion, categoria, precio_nivel, direccion, 
 ('Escalada Los Peumos', 'Muro de escalada indoor.', 'deporte', 2, 'Av. Las Condes 11000', 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800', st_makepoint(-70.5103, -33.3702)::geography);
 
 -- Marcar todos los seeds como moderados (visibles a anon).
-update panoramas set moderado = true where creado_por is null and moderado = false;
+update lugares set moderado = true where creado_por is null and moderado = false;
+
+-- Clasificar tipos: turístico (fijo) vs panorama (evento).
+-- Todos los seeds son lugares fijos (museos, parques, restaurantes) → turistico.
+update lugares set tipo = 'turistico' where creado_por is null;

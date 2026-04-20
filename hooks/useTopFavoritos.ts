@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Panorama } from '@/lib/types';
+import type { Lugar, TipoLugar } from '@/lib/types';
 import { useLocationStore } from '@/stores/useLocationStore';
 
-type TopPanorama = Panorama & { total_favoritos: number };
+type TopLugar = Lugar & { total_favoritos: number };
 
-export function useTopFavoritos(limite = 10) {
+export function useTopFavoritos(limite = 10, tipos?: TipoLugar[]) {
   const ubicacion = useLocationStore((s) => s.ubicacion);
-  const [panoramas, setPanoramas] = useState<TopPanorama[]>([]);
+  const [lugares, setLugares] = useState<TopLugar[]>([]);
   const [cargando, setCargando] = useState(false);
 
   useEffect(() => {
@@ -16,18 +16,19 @@ export function useTopFavoritos(limite = 10) {
 
     (async () => {
       setCargando(true);
-      const { data, error } = await supabase.rpc('panoramas_top_favoritos', {
+      const { data, error } = await supabase.rpc('lugares_top_favoritos', {
         lat: ubicacion.lat,
         lng: ubicacion.lng,
         radio_m: 50000,
         limite,
+        tipos: tipos && tipos.length > 0 ? tipos : null,
       });
       if (cancelado) return;
       if (error) {
         console.warn('[top-favs]', error.message);
-        setPanoramas([]);
+        setLugares([]);
       } else {
-        setPanoramas((data ?? []) as TopPanorama[]);
+        setLugares((data ?? []) as TopLugar[]);
       }
       setCargando(false);
     })();
@@ -35,7 +36,7 @@ export function useTopFavoritos(limite = 10) {
     return () => {
       cancelado = true;
     };
-  }, [ubicacion, limite]);
+  }, [ubicacion, limite, tipos?.join(',')]);
 
-  return { panoramas, cargando };
+  return { lugares, cargando, panoramas: lugares };
 }

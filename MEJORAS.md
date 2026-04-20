@@ -1,113 +1,137 @@
-# Plan de mejoras — 20 puntos
+# Plan de mejoras
 
-Roadmap priorizado para iteraciones futuras. Agrupado por tema.
+Roadmap priorizado. 50 items totales. Organizado por tema.
 
 **Leyenda impacto**: 🔥 alto · ⚡ medio · 💡 bajo
 **Leyenda esfuerzo**: S (≤1 día) · M (2-4 días) · L (1+ sem)
 
----
-
-## 🏗️ Infraestructura y calidad
-
-### 1. 🔥 Tests automáticos (unit + E2E) — L
-Cero tests hoy. Agregar Jest + React Native Testing Library para stores/hooks. Playwright o Maestro para E2E del flujo onboarding → login → publicar → review. Mock Supabase con MSW.
-
-### 2. 🔥 CI/CD en GitHub Actions — S
-Workflow con `typecheck`, `lint`, `build web`, `expo-doctor`. Bloquear merge si rompe. Preview deploy automático en cada PR vía Vercel.
-
-### 3. ⚡ Error tracking + analytics — S
-Integrar Sentry (errores + performance) y PostHog o Plausible (eventos). Tracker clicks en secciones, búsquedas, conversión onboarding.
-
-### 4. ⚡ Migrar a React Query (TanStack Query) — M
-Reemplazar hooks con `useState`/`useEffect` manual por `useQuery`/`useMutation`. Cache, dedupe, refetch on focus, invalidación tras mutaciones. Elimina refrescos manuales de reviews/favoritos.
-
-### 5. 💡 Design tokens + theme system — M
-Extraer colores/spacing/typography a `constants/theme.ts`. Soportar dark mode (respetando `useColorScheme`). Actualmente colores hard-coded y sin dark mode real.
+Items marcados ✅ ya implementados (abril 2026).
 
 ---
 
-## 📱 UX / Producto
+## A. Onboarding y primeros momentos (3)
 
-### 6. 🔥 Búsqueda por texto — M
-Input en el pill de search con autocomplete. Backend: índice GIN + `ILIKE` o full-text search en `panoramas.nombre` + `descripcion` + `direccion`. Agregar a `useNearbyPanoramas` filtro `q: string`.
+- ✅ **A.1** ⚡ S — Reconfigurar preferencias en Perfil (modal con intereses/radio/compañía).
+- ✅ **A.2** ⚡ S — Demo mode con datos mock sin permisos/login (activado para guests sin resultados reales).
+- ✅ **A.3** 💡 M — Coach-marks tooltips first-time (persistido AsyncStorage, dismissible).
 
-### 7. 🔥 Paginación / infinite scroll — M
-RPCs hoy retornan todo en una sola llamada. Agregar `offset` + `limit` a `panoramas_cerca`. En `app/seccion/[tipo].tsx` paginar con `FlatList` `onEndReached`.
+## B. Home / Descubrimiento (9)
 
-### 8. 🔥 Notificaciones push — M
-Via `expo-notifications` + Edge Function. Avisar cuando un panorama propio es aprobado, cuando alguien deja review en tu publicación, cuando hay nuevos panoramas en tus categorías favoritas.
+- ✅ **B.4** 🔥 M — Búsqueda texto + autocomplete (FTS Postgres `tsvector` stored + input debounced).
+- ✅ **B.5** 🔥 M — Paginación infinite scroll (RPC `p_limit`/`p_offset` + `onEndReached`).
+- ✅ **B.6** ⚡ S — Filtros persistidos entre sesiones (zustand persist AsyncStorage).
+- ✅ **B.7** ⚡ S — Sección "Recién agregados" (hook `useRecientes`, order by created_at).
+- ✅ **B.8** ⚡ M — Sección "Tendencias/Destacados" (RPC `lugares_top_favoritos`).
+- ✅ **B.9** ⚡ M — Agrupación por tipo (tab Mapa filtra turístico/panorama; Explorar usa `tipos=['turistico']`).
+- **B.10** 💡 M — Clima integrado (OpenWeather). Sugerencias indoor si llueve. **Pendiente: API key.**
+- ✅ **B.11** ⚡ M — Tags emergentes (pet-friendly, LGBT+, accesible, apto bebés, wifi, estacionamiento, terraza, A/C, reservar antes, solo efectivo). Filtro en modal.
+- ✅ **B.12** ⚡ S — Skeleton loaders (`SkeletonCard`, `SkeletonRow`).
 
-### 9. ⚡ Selector de ubicación manual — S
-Hoy el panorama creado usa la ubicación actual del usuario. Agregar mini-mapa interactivo en `crear-panorama.tsx` para dropear un pin en ubicación correcta. Usar `MapPressEvent` de react-native-maps.
+## C. Detalle lugar (6)
 
-### 10. ⚡ Fotos múltiples + galería — M
-Hoy solo una foto por panorama. Tabla `panorama_imagenes (id, panorama_id, url, orden)`. Galería horizontal en detalle (Pressable → viewer full-screen). Upload múltiple con `ImagePicker` `allowsMultipleSelection`.
+- ✅ **C.13** 🔥 S — "Cómo llegar" con deep links Maps/Uber/Transantiago + Compartir.
+- ✅ **C.14** ⚡ S — Tiempos estimados (caminando/bici/auto, cálculo aprox por distancia).
+- ✅ **C.15** ⚡ S — Carrusel "Lugares similares" (`useLugaresSimilares` misma cat + cercanos).
+- ✅ **C.16** ⚡ S — "Más del mismo creador" (`useLugaresCreador`).
+- ✅ **C.17** ⚡ S — Filtrar reviews por recientes/mejores/N+ estrellas.
+- **C.18** ⚡ M — Fotos en reviews (user-uploaded). **Pendiente schema `review_imagenes`.**
 
-### 11. ⚡ Horarios y disponibilidad — M
-Campo `horarios jsonb` en panoramas (ej. `{"lun": ["10:00-20:00"], ...}`). Mostrar "Abierto ahora" / "Cierra a las X" en card. Filtro "Abierto ahora".
+## D. Creación de contenido (9)
 
-### 12. ⚡ Compartir con deep links — S
-Hoy `Share.share` envía solo texto. Implementar link `magicalplanet://panorama/<id>` + `https://magical-planet.vercel.app/panorama/<id>`. Abre detalle directo. Meta tags OpenGraph para previsualizaciones en WhatsApp/IG.
+- ✅ **D.19** 🔥 S — Selector pin manual con mini-mapa (Leaflet web, react-native-maps mobile).
+- ✅ **D.20** 🔥 M — Fotos múltiples + galería swipeable (tabla `lugar_imagenes`, hasta 5 fotos, upload multi).
+- **D.21** ⚡ M — Horarios JSONB + badge "abierto ahora" + filtro. **Pendiente.**
+- **D.22** 🔥 M — "Mis lugares" con estado (pendiente/aprobado/rechazado) + motivo. **Pendiente: reemplazar `moderado bool` por enum estado.**
+- **D.23** ⚡ S — Preview antes de publicar (simula card).
+- **D.24** ⚡ S — Borrador autosave AsyncStorage.
+- **D.25** ⚡ S — Duplicar lugar.
+- **D.26** ⚡ M — Importar desde URL Google Maps (parser link).
+- **D.27** 💡 M — Plantillas por categoría (prompts sub-campos).
 
-### 13. 💡 Modo "Colecciones" / guías curadas — L
-Usuarios crean listas temáticas ("Ruta cafés Providencia", "Panoramas niños lluvia"). Tabla `colecciones` + `coleccion_items`. Sección home "Colecciones destacadas".
+## E. Comunidad y reviews (5)
+
+- **E.28** ⚡ S — "Útil" / likes en reviews.
+- **E.29** ⚡ S — Dueño creador responde reviews.
+- **E.30** ⚡ M — Perfil público de usuario.
+- **E.31** 💡 L — Seguir usuarios + feed actividad.
+- **E.32** 💡 M — Check-in con geo + badge.
+
+## F. Reportes y moderación (3)
+
+- **F.33** 🔥 M — Panel admin con flujo estados + motivo rechazo + notif creador.
+- **F.34** ⚡ S — Reportar lugar/review.
+- **F.35** 🔥 M — Rate limiting publicación + validaciones server-side.
+
+## G. Engagement y retención (3)
+
+- **G.36** 🔥 L — Push mobile (EAS) + web notifications.
+- **G.37** ⚡ M — Email newsletter semanal (Supabase Edge + Resend).
+- **G.38** ⚡ M — Referral con reward.
+
+## H. Gamificación (2)
+
+- **H.39** 💡 M — Badges contribución.
+- **H.40** 💡 M — Leaderboard mensual top contribuidores.
+
+## I. Performance y técnica (3)
+
+- **I.41** 🔥 M — React Query + cache SWR.
+- **I.42** ⚡ S — Imágenes responsive con params + blurhash.
+- **I.43** ⚡ M — PWA service worker offline.
+
+## J. Accesibilidad e internacionalización (3)
+
+- **J.44** ⚡ M — A11y: VoiceOver/TalkBack + navegación teclado + tamaños dinámicos.
+- **J.45** ⚡ M — Dark mode auto + toggle manual + design tokens.
+- **J.46** ⚡ L — i18n español/inglés/portugués (react-i18next).
+
+## K. Integraciones y datos (2)
+
+- **K.47** 🔥 S — Sentry + PostHog (errores + funnels + flags + A/B).
+- **K.48** ⚡ S — Deep links app + OG tags + sitemap web.
+
+## L. Monetización y escalado (2)
+
+- **L.49** 💡 L — Reservas + pagos (Stripe/MercadoPago + comisión).
+- **L.50** 💡 L — Listados premium / sponsored con disclaimer.
 
 ---
 
-## 🔐 Seguridad y moderación
+## Status actual
 
-### 14. 🔥 Panel de admin para moderación — L
-Hoy moderación = UPDATE manual en SQL. Crear tab admin (oculto detrás de rol) con lista de pendientes, preview, botones "Aprobar / Rechazar / Pedir cambios". Rol `admin` via `auth.users.app_metadata.role`.
+**Implementado (abril 2026)**: A.1, A.2, A.3, B.4, B.5, B.6, B.7, B.8, B.9, B.11, B.12, C.13, C.14, C.15, C.16, C.17, D.19, D.20.
 
-### 15. 🔥 Rate limiting + validación server-side — M
-Hoy un usuario puede crear panoramas ilimitados vía RLS. Agregar Edge Function o trigger `count(*) < 10 per día per user`. Validar URLs imagen (dominios permitidos), tamaño texto, coordenadas dentro de Chile.
+**18 items (36%)** completados. Plus re-architecture a plataforma turismo con 5 tabs + tabla `lugares` unificada.
 
-### 16. ⚡ Reportar contenido — S
-Botón "Reportar" en detalle. Tabla `reportes(user_id, panorama_id, motivo, descripcion)`. Admin revisa y elimina si aplica.
+**Próximos sprints sugeridos**
 
----
+**Sprint 1 "Cerrar loop creador"**
+- D.22 Mis lugares con estado
+- F.33 Panel admin
+- D.23 Preview antes publicar
+- D.24 Borrador autosave
 
-## 🚀 Performance
+**Sprint 2 "Calidad contenido"**
+- D.21 Horarios
+- C.18 Fotos en reviews
+- D.25 Duplicar
+- D.26 Import Google Maps
 
-### 17. ⚡ Optimización de imágenes — S
-Las URLs Unsplash son full-size. Usar query params `?w=400&q=70` según tamaño de card (pequeña/grande). Agregar blurhash pre-computado por imagen para placeholder. Lazy load sections horizontales.
+**Sprint 3 "Retención"**
+- G.36 Push
+- G.38 Referral
+- K.47 Sentry + PostHog
+- K.48 Deep links + OG
 
-### 18. ⚡ Cache RPC con stale-while-revalidate — S
-Requiere #4 (React Query). `panoramas_cerca` cachea por 30s, revalida en background. Reduce 80% de requests redundantes al cambiar tab/regresar.
-
----
-
-## 🌎 Expansión
-
-### 19. ⚡ Multi-ciudad + multi-país — M
-Hoy hard-coded "Santiago centro" como fallback. Tabla `ciudades` + `paises`. Selector de ciudad en header. RPC recibe ciudad_id opcional. Ampliar seed.
-
-### 20. 💡 Sistema de reservas — L
-Integrar con partners (restaurantes, tours): link UTM a su reserva. Luego: reserva nativa en app → tabla `reservas` + pagos Stripe/MercadoPago. Comisión por reserva = modelo de negocio viable.
-
----
-
-## Prioridad sugerida próximas 2 sprints
-
-**Sprint 1 (foundation, 2 semanas)**
-- #2 CI/CD
-- #3 Sentry + PostHog
-- #4 React Query migration
-- #6 Búsqueda por texto
-- #7 Paginación
-
-**Sprint 2 (features, 2 semanas)**
-- #8 Push notifications
-- #9 Selector ubicación manual
-- #14 Panel admin moderación
-- #12 Deep links
-- #17 Optimización imágenes
-
-Post-sprint: tests (#1), horarios (#11), fotos múltiples (#10), dark mode (#5).
+**Sprint 4 "Performance + UX"**
+- I.41 React Query
+- I.42 Imágenes responsive
+- J.44 A11y
+- J.45 Dark mode
 
 ---
 
-## Métricas a medir (con PostHog post-#3)
+## Métricas a medir (con PostHog post K.47)
 
 - Conversión onboarding completo → primera sesión
 - CTR carousels vs "Ver todos"
@@ -115,3 +139,5 @@ Post-sprint: tests (#1), horarios (#11), fotos múltiples (#10), dark mode (#5).
 - % usuarios que dejan review tras visitar detalle
 - Tiempo hasta primer favorito
 - Retención D1 / D7 / D30
+- Ratio publicaciones aprobadas vs rechazadas
+- Búsquedas sin resultados (mejorar seed contenido)

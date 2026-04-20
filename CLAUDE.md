@@ -4,136 +4,186 @@ Contexto persistente para Claude Code. Leer al iniciar cualquier sesión en este
 
 ## Proyecto
 
-**magical-planet** — app móvil+web de descubrimiento de panoramas (actividades, lugares) geolocalizados. Usuario arranca en Santiago Chile. Estética inspirada en Airbnb.
+**magical-planet** — plataforma turismo Chile (foco inicial Santiago). Descubrir lugares turísticos (monumentos, museos, parques, restaurantes) y panoramas (eventos casuales con fecha).
 
-- **Frontend**: Expo (React Native + web) — `expo-router` 6
+- **Frontend**: Expo 54 + React Native 0.81 + React 19 (mobile + web)
+- **Routing**: expo-router 6 (file-based, typed-routes on)
 - **Backend**: Supabase (PostgreSQL + PostGIS + Auth + Storage + RLS)
 - **Estado**: Zustand + persist (AsyncStorage)
-- **Deploy web**: Vercel (`vercel.json` ejecuta `npx expo export --platform web` → `dist/`)
+- **Deploy web**: Vercel
 
 URL prod: https://magical-planet.vercel.app
+Repo: https://github.com/C0rellana/Turismo
 
-## Stack detallado
+## Arquitectura
 
-| Capa | Librería |
-|---|---|
-| Routing | expo-router (file-based) |
-| UI | React Native + @expo/vector-icons (Ionicons) |
-| Estilos | StyleSheet inline — no hay theme system global todavía |
-| Mapas | react-native-maps (nativo) + fallback `.web.tsx` |
-| Estado cliente | zustand + persist middleware |
-| Fetching | supabase-js directo (no React Query) |
-| Auth | Supabase Auth con Google OAuth via `expo-auth-session` |
-| Images | expo-image |
-| Location | expo-location |
+### Modelo de datos
 
-**Node mínimo**: 20+. Metro rompe con Node 18. Usar `nvm use 22.10.0`.
+**Tabla única `lugares`** con enum `tipo_lugar`:
+- `turistico` — lugares fijos visitables (museos, parques, restaurantes, monumentos)
+- `panorama` — eventos o actividades casuales con fecha (`fecha_inicio`, `fecha_fin`)
 
-## Convenciones del proyecto
+Columnas clave:
+- `location` geography(point, 4326) — PostGIS
+- `categoria` enum 6 valores
+- `busqueda_tsv` tsvector stored (FTS español)
+- `tags` text[] (pet-friendly, wifi, etc.)
+- `creado_por` uuid → auth.users
+- `moderado` boolean — anon ve solo `true`; auth ve sus propios pendientes
 
-### Paths
+**Tablas relacionadas**:
+- `favoritos(user_id, lugar_id)` — sync con RLS
+- `reviews(lugar_id, user_id, rating 1-5, comentario)` — 1 por par
+- `lugar_imagenes(lugar_id, url, orden)` — fotos múltiples
 
-- `app/` — rutas Expo Router (file-based)
-- `app/(tabs)/` — tab navigator: index (home), favorites, perfil
-- `app/(onboarding)/` — welcome, intereses, radio, compania
-- `app/auth/` — login, callback
-- `app/seccion/[tipo].tsx` — grid responsive para ver todos los panoramas de una sección
-- `app/panorama/[id].tsx` — detalle con reviews
-- `app/crear-panorama.tsx` — publicar (auth-gated)
-- `app/filters.tsx` — modal filtros
-- `components/` — reutilizables (`PanoramaCardAirbnb`, `RatingStars`, `MapaPanoramas`)
-- `stores/` — zustand stores (`useAuthStore`, `useFavoritesStore`, `useFiltersStore`, `useLocationStore`, `useOnboardingStore`)
-- `hooks/` — custom (`useNearbyPanoramas`, `useTopFavoritos`, `useReviews`)
-- `lib/` — utils (`supabase.ts`, `types.ts`, `distance.ts`)
-- `constants/categories.ts` — 6 categorías fijas
-- `supabase/` — `schema.sql` (consolidado) + `seed.sql` + `migrations/`
+### RPCs Supabase
 
-### Convenciones de código
+- `lugares_cerca(lat, lng, radio_m, tipos[], q, p_limit, p_offset)` — búsqueda + paginación + filtros
+- `lugares_top_favoritos(lat, lng, radio_m, limite, tipos[])` — ranking por favoritos
+- `panoramas_proximos(lat, lng, radio_m, dias, p_limit)` — eventos próximos por fecha
 
-- **Idioma**: UI en español chileno neutro (vos/tú). Identifiers en español: `useNearbyPanoramas`, `panoramas_cerca`, `useFavoritesStore`.
-- **Sin i18n** — español hard-coded.
-- **Imports**: alias `@/` apunta a raíz (`tsconfig.json` paths).
-- **Estilos**: co-ubicados en mismo archivo vía `StyleSheet.create`.
-- **Iconos**: Ionicons siempre (`@expo/vector-icons`).
-- **Colores**: paleta hard-coded por categoría en `constants/categories.ts`. Acento app `#E94F37` (rojo coral tipo airbnb), primary texto `#111`.
-- **Expo Router typed-routes**: activado pero las nuevas rutas (`/auth/login`, `/crear-panorama`, `/(onboarding)/intereses`, etc.) necesitan cast `as any` hasta que expo regenere types. No borrar estos casts arbitrariamente.
+Todos los RPCs respetan RLS y filtro moderado+ownership.
 
-### Supabase
+### Navegación (5 tabs)
 
-- **Cliente**: `lib/supabase.ts` usa `EXPO_PUBLIC_SUPABASE_URL` + `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
-- **Persist session**: activado en mobile (AsyncStorage) y web (detectSessionInUrl=true).
-- **RLS**: todas las tablas tienen RLS habilitada. Ver `supabase/schema.sql`.
-- **Moderación panoramas**: columna `moderado boolean`. Anon solo ve `moderado=true`. Authenticated ve los suyos aunque no moderados. **Seeds se marcan moderados vía UPDATE al final de `seed.sql`**.
-- **RPCs**: `panoramas_cerca(lat,lng,radio_m)`, `panoramas_top_favoritos(lat,lng,radio_m,limite)`. Ambos retornan `rating_promedio` + `total_reviews`.
+```
+app/(tabs)/
+├── index.tsx         # INICIO — dashboard: saludo, bloques, carousels mixtos
+├── explorar.tsx      # EXPLORAR — lugares turísticos, búsqueda, grid responsive
+├── mapa.tsx          # MAPA — Leaflet web + react-native-maps mobile
+├── panoramas.tsx     # PANORAMAS — eventos/casuales con fecha
+└── perfil.tsx        # PERFIL — user + preferencias modal
+```
 
-### Auth
+Rutas stack:
+- `lugar/[id].tsx` — detalle con galería, reviews filtrables, similares, creador, cómo llegar
+- `crear-lugar.tsx` — publicar (auth-gated) con tipo+pin manual+fotos multi+fecha
+- `auth/login` + `auth/callback` — Google OAuth
+- `filters.tsx` — modal filtros (categorías, radio, precios rango, rating, tags)
+- `seccion/[tipo].tsx` — grid responsive por tipo (cerca/intereses/favoritos/recientes)
+- `(onboarding)/` — welcome → intereses → radio → compania (solo primera vez)
 
-- Flow Google OAuth via `supabase.auth.signInWithOAuth({provider:'google'})` + `WebBrowser.openAuthSessionAsync` en mobile.
-- `stores/useAuthStore.ts` hace `onAuthStateChange`:
-  - `SIGNED_IN` → `mergeLocalToServer()` + `fetchFromServer()` de favoritos
-  - `SIGNED_OUT` → `clearMemory()` de favoritos
-- **Setup manual necesario**: Google Cloud Console (OAuth credentials) + Supabase Auth Providers (enable + pegar Client ID/Secret + agregar redirect URLs incluyendo dominio Vercel y `magicalplanet://auth/callback`).
+## Convenciones
 
-### Publicar panoramas
+### Código
 
-- Solo usuarios logueados (auth gate en `app/crear-panorama.tsx`).
-- INSERT con `creado_por=auth.uid()`, `moderado=false`.
-- Imagen sube a bucket Storage `panoramas-imagenes` (debe existir; crear manual en dashboard).
-- Moderación manual vía SQL: `UPDATE panoramas SET moderado=true WHERE id='...'`.
+- **Idioma**: UI español chileno neutro (vos/tú). Identifiers en español: `useNearbyLugares`, `lugares_cerca`, `CrearLugar`.
+- **Sin i18n** — strings hard-coded.
+- **Alias**: `@/` → raíz (`tsconfig.json`).
+- **Estilos**: `StyleSheet.create` co-ubicado.
+- **Iconos**: Ionicons (`@expo/vector-icons`).
+- **Colores**: paleta hard-coded por categoría. Acento `#E94F37` (airbnb-like).
+- **Expo typed-routes**: rutas nuevas necesitan `as any` hasta regen.
 
-## Comandos útiles
+### Patrones
+
+**Nueva feature:**
+1. Schema migration en `supabase/migrations/NNN_nombre.sql`
+2. Reflejar en `supabase/schema.sql` consolidado
+3. Tipos en `lib/types.ts`
+4. Hook en `hooks/useX.ts`
+5. UI en `app/...` o `components/...`
+
+**Nueva tab:**
+- Agregar screen en `app/(tabs)/nombre.tsx`
+- Agregar entry en `app/(tabs)/_layout.tsx`
+- Definir color icono activo
+
+**Nuevo tipo de contenido:**
+- Agregar valor al enum `tipo_lugar` en migration
+- Reflejar en `TipoLugar` en types.ts
+- Filtros en RPCs aceptan `tipos[]` array
+
+## Comandos
 
 ```bash
-# Dev
-nvm use 22.10.0
+nvm use 22.10.0                  # Node 20+ obligatorio
 npm install
-npx expo start --web           # web
+npx expo start --web
 npx expo start --android
-npx expo start --ios
-
-# Checks
-npx tsc --noEmit
-npx expo lint
-
-# Build web
-npx expo export --platform web
-
-# Deploy (necesita Vercel CLI + token)
-npx vercel --prod --token=$VERCEL_TOKEN
-
-# Env vars vercel
-npx vercel env ls --token=$VERCEL_TOKEN
+npx tsc --noEmit                 # typecheck
+npx expo lint                    # lint
+npx expo export --platform web   # build web
+npx vercel --prod                # deploy
 ```
 
 ## Pitfalls conocidos
 
-1. **Node 18 rompe metro** (`configs.toReversed is not a function`). Usar 20+.
-2. **Expo Router typed-routes**: rutas nuevas necesitan `as any` hasta regeneración automática.
-3. **Vars Supabase del plugin Vercel**: `vercel env pull` NO descarga valores de vars añadidas por integración (son sensitive). Para migraciones SQL se requiere pedir `POSTGRES_URL_NON_POOLING` manual desde dashboard.
-4. **Google OAuth**: no hay forma programática de configurar Cloud Console. Es setup 100% manual.
-5. **Seeds y moderación**: si se ejecuta `schema.sql` sin el UPDATE final del `seed.sql`, seeds quedan invisibles a anon (moderado=false por default).
-6. **Favoritos sync circular import**: `useAuthStore` importa `useFavoritesStore`. Funciona porque se usa lazy via `getState()` en callbacks. No convertir en imports directos.
-7. **expo-file-system**: nueva versión no expone `EncodingType`. Usar string literal `'base64'` directamente.
-8. **Maps web**: `react-native-maps` no funciona en web. `MapaPanoramas.web.tsx` es fallback. No importar MapView en código shared sin verificar Platform.
+1. **Node 18 rompe metro** — usar 20+.
+2. **Typed-routes**: rutas nuevas necesitan `as any` hasta regeneración.
+3. **Vars Vercel-Supabase integration**: `vercel env pull` NO descarga valores sensibles.
+4. **Google OAuth**: setup 100% manual (Cloud Console + Supabase dashboard).
+5. **Seeds**: `seed.sql` hace UPDATE final para marcar `moderado=true` y `tipo='turistico'`.
+6. **Import circular**: `useAuthStore` ↔ `useFavoritesStore`. Funciona vía `getState()` lazy.
+7. **expo-file-system**: usar string literal `'base64'` (no `EncodingType.Base64`).
+8. **Maps web**: `react-native-maps` no anda web. Usa `MapaLeaflet.web.tsx` (Leaflet).
+9. **Leaflet SSR**: import dinámico dentro de `useEffect` para evitar build errors.
+10. **Storage bucket**: `panoramas-imagenes` se usa para ambos tipos. Crear manual en dashboard.
 
-## Patterns a seguir
+## Hooks clave
 
-- **Nueva sección del home** → agregar `app/seccion/[tipo].tsx` con case nuevo en el switch + llamar desde home con `onVerTodos`.
-- **Nueva categoría** → agregar a `constants/categories.ts` + a check constraint en `supabase/schema.sql` + al type `CategoriaId` en `lib/types.ts`.
-- **Nuevo filtro** → extender `lib/types.ts#Filtros` + `stores/useFiltersStore.ts` + aplicar en `hooks/useNearbyPanoramas.ts` + UI en `app/filters.tsx`.
-- **Nuevo RPC** → crear migration file en `supabase/migrations/NNN_nombre.sql` + reflejar en `supabase/schema.sql` consolidado.
+- `useNearbyLugares({ tipos, q, pageSize })` — búsqueda + paginación via RPC
+- `useTopFavoritos(limite, tipos)` — ranking favoritos comunidad
+- `usePanoramasProximos(dias, limite)` — eventos próximos
+- `useRecientes(limite, tipos)` — order by created_at desc
+- `useLugaresSimilares(lugar, limite)` — misma cat + cercanos
+- `useLugaresCreador(lugarId, limite)` — del mismo user
+- `useReviews(lugarId, filtro)` — reviews + rating + filter
+
+## Componentes clave
+
+- `LugarCard` — card universal con badge evento/top/nuevo, rating, heart fav
+- `MapaLeaflet` — wrapper (web Leaflet, mobile react-native-maps)
+- `MiniMapaPicker` — mini-mapa interactivo para pin en crear-lugar
+- `RatingStars` — readonly + interactivo
+- `Skeleton` / `SkeletonRow` / `SkeletonCard` — loading placeholders
+- `CoachMark` — tooltip first-time dismissible (persist AsyncStorage)
+- `WelcomeCTA` — banner login incentivado para guests
+- `SectionHeader` — título + subtítulo + chevron para "Ver todos"
+
+## Stores Zustand
+
+- `useAuthStore` — user, session, signInWithGoogle, signOut, init
+- `useFavoritesStore` — local + Supabase sync, merge on login
+- `useFiltersStore` — persist: categorias, radio, precios, rating, tags
+- `useLocationStore` — ubicación actual o Santiago default
+- `useOnboardingStore` — completado, intereses, radio, compania
+
+## Seguridad / Auth
+
+- Google OAuth via `supabase.auth.signInWithOAuth` + `WebBrowser.openAuthSessionAsync`
+- Mobile: scheme `magicalplanet://auth/callback`
+- Web: `<dominio>/auth/callback`
+- `onAuthStateChange` dispara merge favoritos locales → Supabase
+- Publicar/reviews auth-gated. Reviews abiertas a lectura anon.
+
+## Setup externo requerido
+
+1. Supabase: ejecutar `supabase/schema.sql` + `seed.sql` en SQL Editor
+2. Supabase: crear bucket Storage `panoramas-imagenes` público (INSERT auth, SELECT public)
+3. Google Cloud Console: OAuth 2.0 Client ID Web + redirect `https://<ref>.supabase.co/auth/v1/callback`
+4. Supabase Auth → Providers → Google: enable + Client ID + Secret
+5. Supabase Auth → URL Configuration: Additional redirect URLs: `magicalplanet://auth/callback` + dominio Vercel
 
 ## No hacer
 
-- No introducir React Query por ahora (todo el fetching es suficiente con supabase-js directo + useState).
-- No introducir i18n hasta decidir locales soportados.
-- No cambiar la paleta de colores sin alinear con CATEGORIAS constants.
-- No hacer `force push` al repo sin confirmación.
-- No commitear `.env`, `.env.vercel`, `dist/`, `node_modules/`.
+- No introducir React Query todavía (supabase-js directo suficiente).
+- No cambiar paleta colores sin alinear con `constants/categories.ts` + `tags.ts`.
+- No hacer force push sin confirmación.
+- No commitear `.env`, `.env.vercel`, `dist/`, `node_modules/`, `.expo/`.
+- No reintroducir nombre `panoramas` en código nuevo — usar `lugares` con `tipo`.
 
 ## Estado actual (abril 2026)
 
-- **MVP completo**: ver, favoritear (local + sync), onboarding 3-pasos, Google OAuth, publicar con moderación, reviews con rating, filtros (categorías, radio, precio rango, rating mínimo).
-- **UI airbnb-style** aplicada al Home (pill search, tabs categoría top, carousels secciones, grid responsive Disponibles).
-- **Deploy prod activo** en Vercel.
-- **Pendiente setup externo**: Google OAuth, Storage bucket, migraciones SQL en DB prod (esperan `POSTGRES_URL_NON_POOLING`).
+Features completas:
+- Plataforma turismo con 5 tabs (Inicio/Explorar/Mapa/Panoramas/Perfil)
+- Tabla única `lugares` con tipo turistico/panorama + fechas eventos
+- Full-text search + paginación infinite scroll
+- Mapa funcional web (Leaflet) + mobile (react-native-maps)
+- Auth Google + publicar con moderación + reviews con filtros + fotos múltiples
+- Selector pin manual en crear-lugar
+- Cómo llegar (Maps/Uber/Transantiago) + tiempos estimados
+- Tags pet-friendly/accesible/wifi/etc
+- Coach-marks + demo mode para guests
+- Reconfigurar preferencias en Perfil
+- Skeleton loaders + grid responsive 1-4 columnas

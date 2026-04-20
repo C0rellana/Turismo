@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CategoryChip } from '@/components/CategoryChip';
 import { RatingStars } from '@/components/RatingStars';
 import { CATEGORIAS } from '@/constants/categories';
+import { TAGS } from '@/constants/tags';
 import { formatPrecio } from '@/lib/distance';
 import { useFiltersStore } from '@/stores/useFiltersStore';
 
@@ -20,11 +21,13 @@ export default function Filters() {
     precioMin,
     precioMax,
     minRating,
+    tags,
     toggleCategoria,
     setRadio,
     setSoloGratis,
     setPrecioRango,
     setMinRating,
+    toggleTag,
     reset,
   } = useFiltersStore();
 
@@ -135,6 +138,30 @@ export default function Filters() {
               )}
             </Pressable>
           ))}
+        </View>
+
+        <Text style={styles.seccion}>Características</Text>
+        <View style={styles.chips}>
+          {TAGS.map((t) => {
+            const activo = tags.includes(t.id);
+            return (
+              <Pressable
+                key={t.id}
+                onPress={() => toggleTag(t.id)}
+                style={[
+                  styles.radioChip,
+                  activo && { borderColor: t.color, backgroundColor: t.color + '20' },
+                ]}>
+                <View style={styles.ratingOpt}>
+                  <Ionicons name={t.icon} size={12} color={activo ? t.color : '#666'} />
+                  <Text
+                    style={[styles.radioTxt, activo && { color: t.color, fontWeight: '700' }]}>
+                    {t.label}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
       </ScrollView>
 

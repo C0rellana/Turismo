@@ -1,48 +1,64 @@
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PanoramaCardAirbnb } from '@/components/PanoramaCardAirbnb';
-import { useNearbyPanoramas } from '@/hooks/useNearbyPanoramas';
+import { LugarCard } from '@/components/LugarCard';
+import { useNearbyLugares } from '@/hooks/useNearbyLugares';
+import { useRecientes } from '@/hooks/useRecientes';
 import { useTopFavoritos } from '@/hooks/useTopFavoritos';
-import type { Panorama } from '@/lib/types';
+import type { Lugar } from '@/lib/types';
+import { useFavoritesStore } from '@/stores/useFavoritesStore';
 import { useOnboardingStore } from '@/stores/useOnboardingStore';
 
 const TITULOS: Record<string, { titulo: string; subtitulo: string }> = {
   cerca: { titulo: 'Cerca de ti', subtitulo: 'Panoramas a pocos km' },
   intereses: { titulo: 'Basado en tus intereses', subtitulo: 'Según tus categorías' },
   favoritos: { titulo: 'Favoritos entre usuarios', subtitulo: 'Los más guardados' },
-  disponibles: { titulo: 'Disponibles ahora', subtitulo: 'Todos los panoramas' },
+  recientes: { titulo: 'Recién agregados', subtitulo: 'Nuevos lugares' },
+  disponibles: { titulo: 'Disponibles', subtitulo: 'Todos los lugares' },
 };
 
 export default function Seccion() {
   const router = useRouter();
   const { tipo } = useLocalSearchParams<{ tipo: string }>();
   const { width } = useWindowDimensions();
-  const { panoramas, estado } = useNearbyPanoramas();
-  const { panoramas: topFavs } = useTopFavoritos(30);
+  const { lugares, estado } = useNearbyLugares({ pageSize: 200 });
+  const { lugares: topFavs } = useTopFavoritos(30);
+  const { lugares: recientes } = useRecientes(30);
+  const misFavoritos = useFavoritesStore((s) => Object.values(s.favoritos));
   const intereses = useOnboardingStore((s) => s.intereses);
 
   const meta = TITULOS[tipo ?? ''] ?? TITULOS.disponibles;
 
-  const items: Panorama[] = useMemo(() => {
+  const items: Lugar[] = useMemo(() => {
     switch (tipo) {
       case 'cerca':
-        return panoramas;
+        return lugares;
       case 'intereses':
         return intereses.length
-          ? panoramas.filter((p) => intereses.includes(p.categoria))
-          : panoramas;
+          ? lugares.filter((l) => intereses.includes(l.categoria))
+          : lugares;
       case 'favoritos':
-        return topFavs;
+        // Si es "Mis favoritos" desde perfil, usa misFavoritos. Sino top de comunidad.
+        return misFavoritos.length > 0 ? misFavoritos : topFavs;
+      case 'recientes':
+        return recientes;
       default:
-        return panoramas;
+        return lugares;
     }
-  }, [tipo, panoramas, topFavs, intereses]);
+  }, [tipo, lugares, topFavs, recientes, misFavoritos, intereses]);
 
   const columnas = width > 1200 ? 4 : width > 900 ? 3 : width > 600 ? 2 : 1;
   const gap = 16;
-  const cardW = (width - 32 - gap * (columnas - 1)) / columnas;
+  const maxContent = Math.min(width, 1400);
+  const cardW = (maxContent - 32 - gap * (columnas - 1)) / columnas;
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -60,12 +76,13 @@ export default function Seccion() {
         )}
 
         <View style={[styles.grid, { gap }]}>
-          {items.map((p) => (
-            <View key={p.id} style={{ width: cardW }}>
-              <PanoramaCardAirbnb
-                panorama={p}
-                onPress={() => router.push(`/panorama/${p.id}`)}
+          {items.map((l) => (
+            <View key={l.id} style={{ width: cardW }}>
+              <LugarCard
+                lugar={l}
+                onPress={() => router.push(`/lugar/${l.id}` as any)}
                 size="large"
+                fullWidth
               />
             </View>
           ))}

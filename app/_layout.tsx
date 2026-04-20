@@ -22,7 +22,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="panorama/[id]" options={{ headerShown: true, title: '' }} />
+          <Stack.Screen name="lugar/[id]" options={{ headerShown: true, title: '' }} />
           <Stack.Screen
             name="filters"
             options={{
@@ -41,8 +41,8 @@ export default function RootLayout() {
           />
           <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
           <Stack.Screen
-            name="crear-panorama"
-            options={{ headerShown: true, title: 'Publicar panorama' }}
+            name="crear-lugar"
+            options={{ headerShown: true, title: 'Publicar' }}
           />
         </Stack>
       ) : (

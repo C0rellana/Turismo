@@ -1,0 +1,172 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CategoryTabs } from '@/components/CategoryTabs';
+import { LugarCard } from '@/components/LugarCard';
+import { MapaLeaflet } from '@/components/MapaLeaflet';
+import { SearchPill } from '@/components/SearchPill';
+import { useNearbyLugares } from '@/hooks/useNearbyLugares';
+import type { Lugar, TipoLugar } from '@/lib/types';
+import { useLocationStore } from '@/stores/useLocationStore';
+
+type Filtro = 'todos' | 'turistico' | 'panorama';
+
+export default function Mapa() {
+  const router = useRouter();
+  const ubicacion = useLocationStore((s) => s.ubicacion);
+  const solicitar = useLocationStore((s) => s.solicitar);
+  const [filtro, setFiltro] = useState<Filtro>('todos');
+  const [seleccionado, setSeleccionado] = useState<Lugar | null>(null);
+
+  const [q, setQ] = useState('');
+  const [qDebounced, setQDebounced] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setQDebounced(q), 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const tipos: TipoLugar[] | undefined = filtro === 'todos' ? undefined : [filtro];
+  const { lugares, estado } = useNearbyLugares({
+    tipos,
+    q: qDebounced,
+    pageSize: 200,
+  });
+
+  useEffect(() => {
+    if (!ubicacion) void solicitar();
+  }, [ubicacion, solicitar]);
+
+  if (!ubicacion) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingBox}>
+          <ActivityIndicator />
+          <Text style={styles.loadingTxt}>Solicitando ubicación...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.titulo}>Mapa</Text>
+      </View>
+
+      <SearchPill value={q} onChange={setQ} placeholder="Buscar en el mapa..." />
+
+      {/* Filtros tipo */}
+      <View style={styles.filtrosRow}>
+        {(['todos', 'turistico', 'panorama'] as Filtro[]).map((f) => {
+          const activo = filtro === f;
+          const label = f === 'todos' ? 'Todos' : f === 'turistico' ? 'Turísticos' : 'Panoramas';
+          const icon = f === 'todos' ? 'earth' : f === 'turistico' ? 'location' : 'sparkles';
+          return (
+            <Pressable
+              key={f}
+              onPress={() => setFiltro(f)}
+              style={[styles.filtroChip, activo && styles.filtroChipActive]}>
+              <Ionicons name={icon as any} size={14} color={activo ? '#fff' : '#666'} />
+              <Text style={[styles.filtroTxt, activo && styles.filtroTxtActive]}>{label}</Text>
+            </Pressable>
+          );
+        })}
+        {estado === 'cargando' && (
+          <View style={styles.loadingInline}>
+            <ActivityIndicator size="small" />
+          </View>
+        )}
+      </View>
+
+      <CategoryTabs />
+
+      <View style={{ flex: 1 }}>
+        <MapaLeaflet
+          ubicacion={ubicacion}
+          lugares={lugares}
+          seleccionadoId={seleccionado?.id}
+          onSelect={setSeleccionado}
+        />
+
+        {seleccionado && (
+          <View style={styles.bottomSheet}>
+            <LugarCard
+              lugar={seleccionado}
+              onPress={() => router.push(`/lugar/${seleccionado.id}` as any)}
+              fullWidth
+              size="medium"
+            />
+            <Pressable onPress={() => setSeleccionado(null)} style={styles.closeBtn}>
+              <Ionicons name="close" size={20} color="#111" />
+            </Pressable>
+          </View>
+        )}
+
+        <View style={styles.contador}>
+          <Text style={styles.contadorTxt}>{lugares.length} lugares</Text>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+  header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
+  titulo: { fontSize: 26, fontWeight: '800', color: '#111' },
+  loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
+  loadingTxt: { color: '#666', fontSize: 13 },
+  filtrosRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  filtroChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  filtroChipActive: { backgroundColor: '#111' },
+  filtroTxt: { fontSize: 13, color: '#666', fontWeight: '700' },
+  filtroTxtActive: { color: '#fff' },
+  loadingInline: { marginLeft: 'auto' },
+  bottomSheet: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 12,
+    elevation: 4,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contador: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  contadorTxt: { color: '#fff', fontSize: 11, fontWeight: '700' },
+});
