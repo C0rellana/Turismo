@@ -1,50 +1,70 @@
-# Welcome to your Expo app 👋
+# Panoramas Cerca
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+POC de app híbrida (iOS / Android / Web) para descubrir panoramas y actividades cercanos.
+Stack: Expo + expo-router + TypeScript + Zustand + Supabase (Postgres + PostGIS).
 
-## Get started
+## Pantallas
 
-1. Install dependencies
+1. **Onboarding** — pide permiso de ubicación
+2. **Explorar** (Home) — toggle Mapa / Lista con pins y cards por categoría
+3. **Filtros** (modal) — categorías, radio, precio
+4. **Detalle** — foto, descripción, acciones (abrir en Maps, compartir, favorito)
+5. **Favoritos** — lista local persistida con AsyncStorage
 
+## Requisitos
+
+- Node ≥ 20.19.4 (actualmente detectado: advertencia si usás Node 18)
+- Cuenta Supabase (free tier alcanza)
+- iOS: Xcode + simulador / Android: Android Studio + emulador
+- Web: navegador
+
+## Setup
+
+1. Crear proyecto Supabase en https://supabase.com
+2. En SQL Editor, ejecutar `supabase/schema.sql` y luego `supabase/seed.sql`
+3. Copiar credenciales:
+   ```bash
+   cp .env.example .env
+   ```
+   Completar `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY` con valores del dashboard.
+4. Instalar dependencias (ya corrió `create-expo-app`):
    ```bash
    npm install
    ```
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Correr
 
 ```bash
-npm run reset-project
+npm run ios      # iOS Simulator
+npm run android  # Android emulator / device
+npm run web      # Navegador (mapa deshabilitado, solo lista)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Estructura
 
-## Learn more
+```
+app/
+  _layout.tsx            # Stack raíz
+  index.tsx              # Redirect a onboarding o tabs
+  (onboarding)/welcome.tsx
+  (tabs)/
+    _layout.tsx          # Tab bar
+    index.tsx            # Home: mapa/lista
+    favorites.tsx
+  panorama/[id].tsx      # Detalle
+  filters.tsx            # Modal
+components/              # UI reusable
+constants/categories.ts  # Categorías y color/icono
+hooks/                   # useNearbyPanoramas
+lib/                     # supabase client, types, formatters
+stores/                  # Zustand (location, filters, favorites, onboarding)
+supabase/                # schema.sql, seed.sql
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Datos
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Tabla `panoramas` con PostGIS (`geography(point, 4326)`). Cliente llama RPC `panoramas_cerca(lat, lng, radio_m)` que devuelve resultados ordenados por distancia.
 
-## Join the community
+## Fuera de alcance (POC)
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Auth, Sentry, CI/CD, Docker, tests, stores, notificaciones push, i18n.
