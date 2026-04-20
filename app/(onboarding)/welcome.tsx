@@ -4,26 +4,22 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocationStore } from '@/stores/useLocationStore';
-import { useOnboardingStore } from '@/stores/useOnboardingStore';
 
 export default function Welcome() {
   const router = useRouter();
   const solicitar = useLocationStore((s) => s.solicitar);
   const usarDefault = useLocationStore((s) => s.usarDefault);
-  const completar = useOnboardingStore((s) => s.completar);
   const [cargando, setCargando] = useState(false);
 
   const onPermitir = async () => {
     setCargando(true);
     await solicitar();
-    completar();
-    router.replace('/(tabs)');
+    router.push('/(onboarding)/intereses' as any);
   };
 
   const onSaltar = () => {
     usarDefault();
-    completar();
-    router.replace('/(tabs)');
+    router.push('/(onboarding)/intereses' as any);
   };
 
   return (

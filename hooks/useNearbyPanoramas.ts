@@ -8,7 +8,7 @@ type Estado = 'idle' | 'cargando' | 'ok' | 'error';
 
 export function useNearbyPanoramas() {
   const ubicacion = useLocationStore((s) => s.ubicacion);
-  const { categorias, radioKm, precioMax } = useFiltersStore();
+  const { categorias, radioKm, soloGratis, precioMin, precioMax, minRating } = useFiltersStore();
 
   const [panoramas, setPanoramas] = useState<Panorama[]>([]);
   const [estado, setEstado] = useState<Estado>('idle');
@@ -29,14 +29,21 @@ export function useNearbyPanoramas() {
       if (categorias.length) {
         lista = lista.filter((p) => categorias.includes(p.categoria));
       }
-      lista = lista.filter((p) => p.precio_nivel <= precioMax);
+      if (soloGratis) {
+        lista = lista.filter((p) => p.precio_nivel === 0);
+      } else {
+        lista = lista.filter((p) => p.precio_nivel >= precioMin && p.precio_nivel <= precioMax);
+      }
+      if (minRating > 0) {
+        lista = lista.filter((p) => (p.rating_promedio ?? 0) >= minRating);
+      }
       setPanoramas(lista);
       setEstado('ok');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error desconocido');
       setEstado('error');
     }
-  }, [ubicacion, radioKm, categorias, precioMax]);
+  }, [ubicacion, radioKm, categorias, soloGratis, precioMin, precioMax, minRating]);
 
   useEffect(() => {
     fetchPanoramas();

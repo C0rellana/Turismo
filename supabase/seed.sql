@@ -44,3 +44,6 @@ insert into panoramas (nombre, descripcion, categoria, precio_nivel, direccion, 
 ('Ciclovía Mapocho', 'Circuito de bici junto al río Mapocho.', 'deporte', 0, 'Av. Andrés Bello', 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800', st_makepoint(-70.6112, -33.4230)::geography),
 ('Farellones', 'Centro de ski en temporada, hiking en verano.', 'deporte', 3, 'Camino a Farellones', 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800', st_makepoint(-70.3231, -33.3547)::geography),
 ('Escalada Los Peumos', 'Muro de escalada indoor.', 'deporte', 2, 'Av. Las Condes 11000', 'https://images.unsplash.com/photo-1522163182402-834f871fd851?w=800', st_makepoint(-70.5103, -33.3702)::geography);
+
+-- Marcar todos los seeds como moderados (visibles a anon).
+update panoramas set moderado = true where creado_por is null and moderado = false;
