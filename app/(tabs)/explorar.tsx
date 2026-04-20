@@ -94,7 +94,7 @@ export default function Explorar() {
               <Text style={styles.emptyTxt}>Sin resultados</Text>
               {qDebounced && (
                 <Text style={styles.emptySub}>
-                  Probá con otra búsqueda o ajustá los filtros.
+                  Prueba con otra búsqueda o ajusta los filtros.
                 </Text>
               )}
             </View>

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -16,6 +16,7 @@ import { LugarCard } from '@/components/LugarCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SkeletonRow } from '@/components/Skeleton';
 import { WelcomeCTA } from '@/components/WelcomeCTA';
+import { ZonaPicker } from '@/components/ZonaPicker';
 import { useNearbyLugares } from '@/hooks/useNearbyLugares';
 import { usePanoramasProximos } from '@/hooks/usePanoramasProximos';
 import { useRecientes } from '@/hooks/useRecientes';
@@ -23,6 +24,7 @@ import { useTopFavoritos } from '@/hooks/useTopFavoritos';
 import { DEMO_LUGARES } from '@/lib/demoLugares';
 import type { Lugar } from '@/lib/types';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useFiltersStore } from '@/stores/useFiltersStore';
 import { useLocationStore } from '@/stores/useLocationStore';
 
 export default function Inicio() {
@@ -30,11 +32,25 @@ export default function Inicio() {
   const user = useAuthStore((s) => s.user);
   const ubicacion = useLocationStore((s) => s.ubicacion);
   const solicitar = useLocationStore((s) => s.solicitar);
+  const custom = useLocationStore((s) => s.custom);
+  const [zonaOpen, setZonaOpen] = useState(false);
 
-  const { lugares: cercanos, estado, refetch } = useNearbyLugares({ pageSize: 8 });
-  const { lugares: topFavs } = useTopFavoritos(8);
-  const { lugares: recientes } = useRecientes(8);
-  const { lugares: proximos } = usePanoramasProximos(30, 8);
+  const categorias = useFiltersStore((s) => s.categorias);
+
+  const { lugares: cercanos, estado, refetch } = useNearbyLugares({ pageSize: 12 });
+  const { lugares: topFavsRaw } = useTopFavoritos(20);
+  const { lugares: recientesRaw } = useRecientes(20);
+  const { lugares: proximosRaw } = usePanoramasProximos(30, 20);
+
+  // Filtrar secciones por categorías del store (transversal)
+  const applyCat = (arr: Lugar[], limit: number) =>
+    (categorias.length > 0 ? arr.filter((l) => categorias.includes(l.categoria)) : arr).slice(
+      0,
+      limit,
+    );
+  const topFavs = applyCat(topFavsRaw, 8);
+  const recientes = applyCat(recientesRaw, 8);
+  const proximos = applyCat(proximosRaw, 8);
 
   useEffect(() => {
     if (!ubicacion) void solicitar();
@@ -67,7 +83,7 @@ export default function Inicio() {
       <CoachMark
         id="inicio-welcome"
         titulo="¡Bienvenido!"
-        mensaje="Explorá lugares turísticos, panoramas y eventos. Tocá las cards para ver más."
+        mensaje="Explora lugares turísticos, panoramas y eventos. Toca las cards para ver más."
       />
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
@@ -77,14 +93,17 @@ export default function Inicio() {
           <Text style={styles.saludo}>
             {saludo}, {nombre} 👋
           </Text>
-          <View style={styles.heroRow}>
+          <Pressable onPress={() => setZonaOpen(true)} style={styles.heroRow}>
             <Ionicons name="location" size={14} color="#E94F37" />
             <Text style={styles.heroSub}>
-              {ubicacion?.esDefault
-                ? 'Santiago centro (ubicación por defecto)'
-                : 'Tu zona actual'}
+              {custom?.label
+                ? `${custom.label} (cambiado)`
+                : ubicacion?.esDefault
+                  ? 'Santiago centro (por defecto)'
+                  : 'Tu zona actual'}
             </Text>
-          </View>
+            <Ionicons name="chevron-down" size={14} color="#666" />
+          </Pressable>
         </View>
 
         {/* WelcomeCTA guest */}
@@ -97,7 +116,7 @@ export default function Inicio() {
           <View style={styles.bloqueZonaHero}>
             <Ionicons name="earth" size={36} color="#fff" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.bloqueZonaTitle}>Descubrí tu zona</Text>
+              <Text style={styles.bloqueZonaTitle}>Descubre tu zona</Text>
               <Text style={styles.bloqueZonaSub}>
                 Lugares turísticos y panoramas a tu alrededor
               </Text>
@@ -126,7 +145,7 @@ export default function Inicio() {
           <View style={styles.demoBadge}>
             <Ionicons name="flask" size={14} color="#8338EC" />
             <Text style={styles.demoBadgeTxt}>
-              Modo demo — datos de ejemplo. Iniciá sesión para ver lugares reales.
+              Modo demo — datos de ejemplo. Inicia sesión para ver lugares reales.
             </Text>
           </View>
         )}
@@ -197,6 +216,7 @@ export default function Inicio() {
           </>
         )}
       </ScrollView>
+      <ZonaPicker visible={zonaOpen} onClose={() => setZonaOpen(false)} />
     </SafeAreaView>
   );
 }

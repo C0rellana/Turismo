@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const BENEFICIOS = [
-  { icon: 'options', txt: 'Personalizá tu feed' },
+  { icon: 'options', txt: 'Personaliza tu feed' },
   { icon: 'notifications', txt: 'Notificaciones de panoramas cerca' },
   { icon: 'sync', txt: 'Favoritos entre dispositivos' },
   { icon: 'mail-open', txt: 'Invitaciones exclusivas' },
@@ -16,7 +16,7 @@ export function WelcomeCTA({ compacto = false }: { compacto?: boolean }) {
     <View style={[styles.box, compacto && styles.compacto]}>
       <View style={styles.header}>
         <Ionicons name="sparkles" size={20} color="#E94F37" />
-        <Text style={styles.titulo}>Iniciá sesión para desbloquear</Text>
+        <Text style={styles.titulo}>Inicia sesión para desbloquear</Text>
       </View>
       {!compacto && (
         <View style={styles.lista}>

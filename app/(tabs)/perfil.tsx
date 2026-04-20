@@ -86,9 +86,9 @@ export default function Perfil() {
             <View style={styles.guestIcon}>
               <Ionicons name="person" size={40} color="#fff" />
             </View>
-            <Text style={styles.guestTitle}>Iniciá sesión</Text>
+            <Text style={styles.guestTitle}>Inicia sesión</Text>
             <Text style={styles.guestDesc}>
-              Personalizá tu experiencia y publicá tus lugares favoritos.
+              Personaliza tu experiencia y publica tus lugares favoritos.
             </Text>
             <Pressable style={styles.btnPrimario} onPress={onLogin}>
               <Ionicons name="logo-google" size={18} color="#fff" />

@@ -18,7 +18,7 @@ export default function Intereses() {
         <Text style={styles.paso}>Paso 1 de 3</Text>
         <Text style={styles.titulo}>¿Qué te interesa?</Text>
         <Text style={styles.subtitulo}>
-          Elegí una o más categorías. Usamos esto para pre-filtrar tus panoramas.
+          Elige una o más categorías. Usamos esto para pre-filtrar tus panoramas.
         </Text>
 
         <View style={styles.grid}>

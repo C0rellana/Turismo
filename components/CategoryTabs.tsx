@@ -17,6 +17,7 @@ export function CategoryTabs() {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.wrap}
       contentContainerStyle={styles.scroll}>
       <Pressable
         onPress={() => setCategorias([])}
@@ -45,7 +46,12 @@ export function CategoryTabs() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingHorizontal: 12, gap: 8, paddingVertical: 8 },
+  wrap: { flexGrow: 0, flexShrink: 0, maxHeight: 56 },
+  scroll: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -55,6 +61,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#f5f5f5',
     marginRight: 8,
+    alignSelf: 'center',
   },
   tabActive: { backgroundColor: '#111' },
   txt: { fontSize: 13, color: '#666', fontWeight: '700' },

@@ -151,7 +151,7 @@ export default function Detalle() {
     if (!lugar) return;
     const url = `https://magical-planet.vercel.app/lugar/${lugar.id}`;
     void Share.share({
-      message: `Mirá este lugar: ${lugar.nombre} - ${lugar.direccion ?? ''}\n${url}`,
+      message: `Mira este lugar: ${lugar.nombre} - ${lugar.direccion ?? ''}\n${url}`,
       url,
     });
   };
@@ -162,7 +162,7 @@ export default function Detalle() {
       return;
     }
     if (ratingDraft < 1) {
-      Alert.alert('Calificación requerida', 'Elegí entre 1 y 5 estrellas.');
+      Alert.alert('Calificación requerida', 'Elige entre 1 y 5 estrellas.');
       return;
     }
     setEnviandoReview(true);
@@ -418,7 +418,7 @@ export default function Detalle() {
             <TextInput
               value={comentarioDraft}
               onChangeText={setComentarioDraft}
-              placeholder="Contanos tu experiencia (opcional)"
+              placeholder="Cuéntanos tu experiencia (opcional)"
               style={styles.input}
               multiline
             />

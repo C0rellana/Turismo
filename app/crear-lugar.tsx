@@ -117,11 +117,11 @@ export default function CrearLugar() {
   const enviar = async () => {
     if (!user) return;
     if (!nombre.trim()) {
-      Alert.alert('Falta el nombre', 'Poné un nombre.');
+      Alert.alert('Falta el nombre', 'Pon un nombre.');
       return;
     }
     if (lat == null || lng == null) {
-      Alert.alert('Sin ubicación', 'Ajustá el pin en el mapa o permití ubicación.');
+      Alert.alert('Sin ubicación', 'Ajusta el pin en el mapa o permití ubicación.');
       return;
     }
     if (tipo === 'panorama' && !fechaInicio) {
@@ -191,7 +191,7 @@ export default function CrearLugar() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* Selector tipo */}
           <View style={styles.field}>
-            <Text style={styles.label}>¿Qué querés publicar?</Text>
+            <Text style={styles.label}>¿Qué quieres publicar?</Text>
             <View style={styles.tipoRow}>
               <Pressable
                 onPress={() => setTipo('turistico')}
@@ -346,7 +346,7 @@ export default function CrearLugar() {
 
           {/* D.19 — Selector pin manual */}
           <View style={styles.field}>
-            <Text style={styles.label}>Ubicación (ajustá el pin)</Text>
+            <Text style={styles.label}>Ubicación (ajusta el pin)</Text>
             {lat !== null && lng !== null ? (
               <MiniMapaPicker
                 lat={lat}

@@ -29,9 +29,9 @@ export default function Favoritos() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="heart-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyTxt}>Aún no tenés favoritos</Text>
+            <Text style={styles.emptyTxt}>Aún no tienes favoritos</Text>
             <Text style={styles.emptySub}>
-              Tocá el corazón en cualquier lugar para guardarlo acá.
+              Toca el corazón en cualquier lugar para guardarlo aquí.
             </Text>
           </View>
         }

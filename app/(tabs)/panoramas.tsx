@@ -20,6 +20,7 @@ import { useNearbyLugares } from '@/hooks/useNearbyLugares';
 import { usePanoramasProximos } from '@/hooks/usePanoramasProximos';
 import { useTopFavoritos } from '@/hooks/useTopFavoritos';
 import type { Lugar } from '@/lib/types';
+import { useFiltersStore } from '@/stores/useFiltersStore';
 import { useLocationStore } from '@/stores/useLocationStore';
 
 export default function Panoramas() {
@@ -35,13 +36,25 @@ export default function Panoramas() {
     return () => clearTimeout(t);
   }, [q]);
 
+  const categorias = useFiltersStore((s) => s.categorias);
+
   const { lugares, estado, refetch, hayMas, loadMore } = useNearbyLugares({
     tipos: ['panorama'],
     q: qDebounced,
     pageSize: 20,
   });
-  const { lugares: proximos } = usePanoramasProximos(7, 6);
-  const { lugares: topFavs } = useTopFavoritos(6, ['panorama']);
+  const { lugares: proximosRaw } = usePanoramasProximos(7, 20);
+  const { lugares: topFavsRaw } = useTopFavoritos(20, ['panorama']);
+
+  // Aplicar filtro categorías (compartido del store)
+  const proximos =
+    categorias.length > 0
+      ? proximosRaw.filter((l) => categorias.includes(l.categoria))
+      : proximosRaw.slice(0, 6);
+  const topFavs =
+    categorias.length > 0
+      ? topFavsRaw.filter((l) => categorias.includes(l.categoria))
+      : topFavsRaw.slice(0, 6);
 
   useEffect(() => {
     if (!ubicacion) void solicitar();
@@ -149,7 +162,7 @@ export default function Panoramas() {
               <Ionicons name="calendar-outline" size={32} color="#ccc" />
               <Text style={styles.emptyTxt}>No hay panoramas próximos</Text>
               <Text style={styles.emptySub}>
-                {qDebounced ? 'Probá con otra búsqueda' : 'Volvé pronto o publicá el tuyo'}
+                {qDebounced ? 'Prueba con otra búsqueda' : 'Vuelve pronto o publica el tuyo'}
               </Text>
             </View>
           )

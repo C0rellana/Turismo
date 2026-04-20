@@ -28,9 +28,9 @@ export default function Welcome() {
         <View style={styles.iconCircle}>
           <Ionicons name="location" size={48} color="#fff" />
         </View>
-        <Text style={styles.titulo}>Panoramas cerca tuyo</Text>
+        <Text style={styles.titulo}>Panoramas cerca de ti</Text>
         <Text style={styles.subtitulo}>
-          Descubrí qué hacer alrededor: gastronomía, cultura, aire libre y más.
+          Descubre qué hacer alrededor: gastronomía, cultura, aire libre y más.
         </Text>
       </View>
 

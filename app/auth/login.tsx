@@ -24,9 +24,9 @@ export default function LoginScreen() {
         <View style={styles.iconCircle}>
           <Ionicons name="compass" size={56} color="#E94F37" />
         </View>
-        <Text style={styles.title}>Unite a la comunidad</Text>
+        <Text style={styles.title}>Únete a la comunidad</Text>
         <Text style={styles.subtitle}>
-          Iniciá sesión para publicar panoramas y sincronizar tus favoritos entre dispositivos.
+          Inicia sesión para publicar panoramas y sincronizar tus favoritos entre dispositivos.
         </Text>
       </View>
 
@@ -48,7 +48,7 @@ export default function LoginScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <Text style={styles.fineprint}>
-          Podés seguir usando la app sin cuenta: vas a ver panoramas y guardarlos como favoritos
+          Puedes seguir usando la app sin cuenta: verás panoramas y guardarlos como favoritos
           localmente.
         </Text>
       </View>
