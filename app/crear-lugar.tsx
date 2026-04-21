@@ -42,7 +42,8 @@ export default function CrearLugar() {
   const [direccion, setDireccion] = useState('');
   const [categoria, setCategoria] = useState<CategoriaId>('gastronomia');
   const [precio, setPrecio] = useState<0 | 1 | 2 | 3>(1);
-  const [imagenes, setImagenes] = useState<string[]>([]);
+  const [imagenes, setImagenes] = useState<{ uri: string; tipo: 'image' | 'video' }[]>([]);
+  const [portadaIdx, setPortadaIdx] = useState(0);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [lat, setLat] = useState<number | null>(null);
@@ -69,13 +70,17 @@ export default function CrearLugar() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsMultipleSelection: true,
       selectionLimit: 5,
       quality: 0.7,
     });
     if (!result.canceled && result.assets) {
-      setImagenes((prev) => [...prev, ...result.assets.map((a) => a.uri)].slice(0, 5));
+      const items = result.assets.map((a) => ({
+        uri: a.uri,
+        tipo: ((a.type as string) === 'video' ? 'video' : 'image') as 'image' | 'video',
+      }));
+      setImagenes((prev) => [...prev, ...items].slice(0, 5));
     }
   };
 
@@ -83,11 +88,19 @@ export default function CrearLugar() {
     setImagenes((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const subirImagen = async (uri: string, userId: string, idx: number): Promise<string | null> => {
+  const subirImagen = async (
+    uri: string,
+    userId: string,
+    idx: number,
+    mediaTipo: 'image' | 'video',
+  ): Promise<string | null> => {
     try {
-      const ext = uri.split('.').pop()?.split('?')[0] ?? 'jpg';
+      const ext = uri.split('.').pop()?.split('?')[0] ?? (mediaTipo === 'video' ? 'mp4' : 'jpg');
       const fileName = `${userId}/${Date.now()}_${idx}.${ext}`;
-      const contentType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+      const contentType =
+        mediaTipo === 'video'
+          ? `video/${ext === 'mov' ? 'quicktime' : ext}`
+          : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
 
       let body: Blob | ArrayBuffer;
       if (Platform.OS === 'web') {
@@ -131,14 +144,15 @@ export default function CrearLugar() {
 
     setEnviando(true);
     try {
-      // Upload fotos
-      const urls: string[] = [];
+      // Upload media
+      const urls: { url: string; tipo: 'image' | 'video' }[] = [];
       for (let i = 0; i < imagenes.length; i++) {
-        const url = await subirImagen(imagenes[i], user.id, i);
-        if (url) urls.push(url);
+        const url = await subirImagen(imagenes[i].uri, user.id, i, imagenes[i].tipo);
+        if (url) urls.push({ url, tipo: imagenes[i].tipo });
       }
 
-      // Insert lugar
+      // Insert lugar (con portada)
+      const portada = urls[portadaIdx] ?? urls[0];
       const { data: ins, error } = await supabase
         .from('lugares')
         .insert({
@@ -148,7 +162,8 @@ export default function CrearLugar() {
           categoria,
           tipo,
           precio_nivel: precio,
-          imagen_url: urls[0] ?? null,
+          imagen_url: portada?.url ?? null,
+          portada_tipo: portada?.tipo ?? 'image',
           creado_por: user.id,
           moderado: false,
           location: `SRID=4326;POINT(${lng} ${lat})`,
@@ -160,11 +175,12 @@ export default function CrearLugar() {
 
       if (error) throw error;
 
-      // Insert imagenes múltiples
+      // Insert media múltiple
       if (ins && urls.length > 0) {
-        const rows = urls.map((url, orden) => ({
+        const rows = urls.map((m, orden) => ({
           lugar_id: ins.id,
-          url,
+          url: m.url,
+          tipo: m.tipo,
           orden,
         }));
         const { error: imgErr } = await supabase.from('lugar_imagenes').insert(rows);
@@ -224,20 +240,34 @@ export default function CrearLugar() {
 
           {/* Fotos múltiples D.20 */}
           <View style={styles.field}>
-            <Text style={styles.label}>Fotos (hasta 5)</Text>
+            <Text style={styles.label}>Fotos y videos (hasta 5). Toca para elegir portada.</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {imagenes.map((uri, i) => (
-                <View key={uri + i} style={styles.imgItem}>
-                  <Image source={{ uri }} style={styles.imgPreview} />
+              {imagenes.map((m, i) => (
+                <Pressable
+                  key={m.uri + i}
+                  style={styles.imgItem}
+                  onPress={() => setPortadaIdx(i)}>
+                  <Image source={{ uri: m.uri }} style={styles.imgPreview} />
+                  {m.tipo === 'video' && (
+                    <View style={styles.videoBadgeSmall}>
+                      <Ionicons name="videocam" size={12} color="#fff" />
+                    </View>
+                  )}
+                  {portadaIdx === i && (
+                    <View style={styles.portadaBadge}>
+                      <Ionicons name="star" size={10} color="#fff" />
+                      <Text style={styles.portadaBadgeTxt}>Portada</Text>
+                    </View>
+                  )}
                   <Pressable onPress={() => removeImage(i)} style={styles.imgDel}>
                     <Ionicons name="close" size={16} color="#fff" />
                   </Pressable>
-                </View>
+                </Pressable>
               ))}
               {imagenes.length < 5 && (
                 <Pressable onPress={pickImages} style={styles.addImg}>
-                  <Ionicons name="camera" size={24} color="#999" />
-                  <Text style={styles.addImgTxt}>Agregar</Text>
+                  <Ionicons name="add" size={24} color="#999" />
+                  <Text style={styles.addImgTxt}>Foto o video</Text>
                 </Pressable>
               )}
             </ScrollView>
@@ -417,6 +447,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  videoBadgeSmall: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: 'rgba(214,40,40,0.9)',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  portadaBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#E9C46A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  portadaBadgeTxt: { color: '#111', fontSize: 9, fontWeight: '700' },
   addImg: {
     width: 100,
     height: 100,

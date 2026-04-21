@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { CATEGORIAS_MAP } from '@/constants/categories';
+import { TAGS_MAP } from '@/constants/tags';
 import { formatPrecio } from '@/lib/distance';
 import type { Lugar } from '@/lib/types';
 import { useFavoritesStore } from '@/stores/useFavoritesStore';
@@ -93,6 +94,23 @@ export function LugarCard({ lugar, onPress, badge, size = 'medium', fullWidth = 
             </View>
           )}
         </View>
+        {lugar.tags && lugar.tags.length > 0 && (
+          <View style={styles.tagsRow}>
+            {lugar.tags.slice(0, 3).map((t) => {
+              const tagDef = TAGS_MAP[t];
+              if (!tagDef) return null;
+              return (
+                <View key={t} style={[styles.tagChip, { backgroundColor: tagDef.color + '20' }]}>
+                  <Ionicons name={tagDef.icon as any} size={10} color={tagDef.color} />
+                  <Text style={[styles.tagTxt, { color: tagDef.color }]}>{tagDef.label}</Text>
+                </View>
+              );
+            })}
+            {lugar.tags.length > 3 && (
+              <Text style={styles.tagsMore}>+{lugar.tags.length - 3}</Text>
+            )}
+          </View>
+        )}
       </View>
     </Pressable>
   );
@@ -149,6 +167,17 @@ const styles = StyleSheet.create({
   precio: { flex: 1, fontSize: 13, color: '#444', fontWeight: '500', marginTop: 2 },
   ratingInline: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   ratingTxt: { fontSize: 12, color: '#111', fontWeight: '700' },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  tagTxt: { fontSize: 10, fontWeight: '700' },
+  tagsMore: { fontSize: 10, color: '#888', fontWeight: '600', alignSelf: 'center' },
 });
 
 /** Alias compatibilidad. Deprecated. */

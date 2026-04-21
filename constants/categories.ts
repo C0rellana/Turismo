@@ -14,6 +14,10 @@ export const CATEGORIAS: readonly CategoriaDef[] = [
   { id: 'nocturno', nombre: 'Nocturno', icono: 'moon', color: '#8338EC' },
   { id: 'familiar', nombre: 'Familiar', icono: 'happy', color: '#FFB400' },
   { id: 'deporte', nombre: 'Deporte', icono: 'football', color: '#06A77D' },
+  { id: 'musica', nombre: 'Música', icono: 'musical-notes', color: '#D946EF' },
+  { id: 'bienestar', nombre: 'Bienestar', icono: 'flower', color: '#10B981' },
+  { id: 'compras', nombre: 'Compras', icono: 'bag', color: '#EAB308' },
+  { id: 'eco', nombre: 'Ecoturismo', icono: 'earth', color: '#2D6A4F' },
 ] as const;
 
 export const CATEGORIAS_MAP = Object.fromEntries(

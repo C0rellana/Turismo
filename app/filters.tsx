@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CategoryChip } from '@/components/CategoryChip';
+import { PrecioRangoSlider } from '@/components/PrecioRangoSlider';
 import { RatingStars } from '@/components/RatingStars';
 import { CATEGORIAS } from '@/constants/categories';
 import { TAGS } from '@/constants/tags';
@@ -9,7 +10,6 @@ import { formatPrecio } from '@/lib/distance';
 import { useFiltersStore } from '@/stores/useFiltersStore';
 
 const RADIOS = [5, 10, 25, 50, 200, 2000, 20000];
-const PRECIOS: (0 | 1 | 2 | 3)[] = [0, 1, 2, 3];
 const RATINGS: (0 | 1 | 2 | 3 | 4 | 5)[] = [0, 3, 4, 5];
 
 export default function Filters() {
@@ -82,38 +82,7 @@ export default function Filters() {
 
         {!soloGratis && (
           <View style={styles.rangoBox}>
-            <View style={styles.rangoLado}>
-              <Text style={styles.rangoLabel}>Mínimo</Text>
-              <View style={styles.chips}>
-                {PRECIOS.map((p) => (
-                  <Pressable
-                    key={`min-${p}`}
-                    onPress={() => setPrecioRango(p, p > precioMax ? p : precioMax)}
-                    style={[styles.precioChip, precioMin === p && styles.precioChipActivo]}>
-                    <Text
-                      style={[styles.precioTxt, precioMin === p && styles.precioTxtActivo]}>
-                      {formatPrecio(p)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-            <View style={styles.rangoLado}>
-              <Text style={styles.rangoLabel}>Máximo</Text>
-              <View style={styles.chips}>
-                {PRECIOS.map((p) => (
-                  <Pressable
-                    key={`max-${p}`}
-                    onPress={() => setPrecioRango(p < precioMin ? p : precioMin, p)}
-                    style={[styles.precioChip, precioMax === p && styles.precioChipActivo]}>
-                    <Text
-                      style={[styles.precioTxt, precioMax === p && styles.precioTxtActivo]}>
-                      {formatPrecio(p)}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
+            <PrecioRangoSlider min={precioMin} max={precioMax} onChange={setPrecioRango} />
           </View>
         )}
 

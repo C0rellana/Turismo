@@ -8,9 +8,9 @@ type FiltersState = Filtros & {
   toggleCategoria: (c: CategoriaId) => void;
   setRadio: (km: number) => void;
   setSoloGratis: (v: boolean) => void;
-  setPrecioRango: (min: 0 | 1 | 2 | 3, max: 0 | 1 | 2 | 3) => void;
-  setPrecioMax: (p: 0 | 1 | 2 | 3) => void;
-  setMinRating: (r: 0 | 1 | 2 | 3 | 4 | 5) => void;
+  setPrecioRango: (min: 0 | 1 | 2 | 3 | 4, max: 0 | 1 | 2 | 3 | 4) => void;
+  setPrecioMax: (p: 0 | 1 | 2 | 3 | 4) => void;
+  setMinRating: (r: 0 | 1 | 2 | 3 | 4 | 4 | 5) => void;
   setTipos: (t: TipoLugar[]) => void;
   setQ: (q: string) => void;
   setTags: (tags: string[]) => void;
@@ -22,8 +22,8 @@ const DEFAULT: Filtros = {
   categorias: [],
   radioKm: 20000,
   soloGratis: false,
-  precioMin: 0,
-  precioMax: 3,
+  precioMin: 1,
+  precioMax: 4,
   minRating: 0,
   tipos: [],
   q: '',
@@ -46,7 +46,7 @@ export const useFiltersStore = create<FiltersState>()(
         set(
           soloGratis
             ? { soloGratis: true, precioMin: 0, precioMax: 0 }
-            : { soloGratis: false, precioMax: 3 },
+            : { soloGratis: false, precioMin: 1, precioMax: 4 },
         ),
       setPrecioRango: (precioMin, precioMax) =>
         set({ precioMin, precioMax, soloGratis: false }),

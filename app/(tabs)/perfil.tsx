@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORIAS } from '@/constants/categories';
+import { useUserRole } from '@/hooks/useUserRole';
 import type { CategoriaId } from '@/lib/types';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useFavoritesStore } from '@/stores/useFavoritesStore';
@@ -29,6 +30,7 @@ const COMPANIAS: { id: Compania; label: string; icon: any }[] = [
 export default function Perfil() {
   const router = useRouter();
   const { user, signOut } = useAuthStore();
+  const { role, esVerificado, esAdmin } = useUserRole();
   const favoritosCount = useFavoritesStore((s) => Object.keys(s.favoritos).length);
   const {
     intereses,
@@ -79,6 +81,28 @@ export default function Perfil() {
             <View style={{ flex: 1 }}>
               <Text style={styles.userName}>{displayName}</Text>
               <Text style={styles.userEmail}>{user.email}</Text>
+              <View style={styles.rolesRow}>
+                {esAdmin && (
+                  <View style={[styles.roleBadge, { backgroundColor: '#D62828' }]}>
+                    <Ionicons name="shield-checkmark" size={10} color="#fff" />
+                    <Text style={styles.roleBadgeTxt}>
+                      {role === 'admin' ? 'Admin' : 'Moderador'}
+                    </Text>
+                  </View>
+                )}
+                {esVerificado && !esAdmin && (
+                  <View style={[styles.roleBadge, { backgroundColor: '#0F766E' }]}>
+                    <Ionicons name="checkmark-circle" size={10} color="#fff" />
+                    <Text style={styles.roleBadgeTxt}>Verificado</Text>
+                  </View>
+                )}
+                {!esVerificado && !esAdmin && (
+                  <View style={[styles.roleBadge, { backgroundColor: '#8B5A3C' }]}>
+                    <Ionicons name="person" size={10} color="#fff" />
+                    <Text style={styles.roleBadgeTxt}>Registrado</Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
         ) : (
@@ -257,6 +281,16 @@ const styles = StyleSheet.create({
   },
   userName: { fontSize: 18, fontWeight: '800', color: '#111' },
   userEmail: { fontSize: 13, color: '#666', marginTop: 2 },
+  rolesRow: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  roleBadgeTxt: { color: '#fff', fontSize: 10, fontWeight: '700' },
   guestBox: { alignItems: 'center', padding: 24, gap: 10 },
   guestIcon: {
     width: 96,

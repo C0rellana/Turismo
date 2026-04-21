@@ -4,9 +4,17 @@ export type CategoriaId =
   | 'cultura'
   | 'nocturno'
   | 'familiar'
-  | 'deporte';
+  | 'deporte'
+  | 'musica'
+  | 'bienestar'
+  | 'compras'
+  | 'eco';
 
 export type TipoLugar = 'turistico' | 'panorama';
+
+export type MediaTipo = 'image' | 'video';
+
+export type UserRole = 'visitor' | 'registered' | 'verified' | 'moderator' | 'admin';
 
 export type Lugar = {
   id: string;
@@ -14,7 +22,7 @@ export type Lugar = {
   descripcion: string | null;
   categoria: CategoriaId;
   tipo: TipoLugar;
-  precio_nivel: 0 | 1 | 2 | 3;
+  precio_nivel: 0 | 1 | 2 | 3 | 4;
   direccion: string | null;
   imagen_url: string | null;
   fecha_inicio?: string | null;
@@ -25,6 +33,8 @@ export type Lugar = {
   rating_promedio?: number;
   total_reviews?: number;
   tags?: string[];
+  portada_tipo?: MediaTipo;
+  portada_thumbnail?: string | null;
 };
 
 /** Alias de compatibilidad. Deprecated: usar Lugar. */
@@ -35,7 +45,12 @@ export type LugarImagen = {
   lugar_id: string;
   url: string;
   orden: number;
+  tipo?: MediaTipo;
+  thumbnail_url?: string | null;
+  duracion_s?: number | null;
 };
+
+export type LugarMedia = LugarImagen;
 
 export type Review = {
   id: string;
@@ -53,9 +68,9 @@ export type Filtros = {
   categorias: CategoriaId[];
   radioKm: number;
   soloGratis: boolean;
-  precioMin: 0 | 1 | 2 | 3;
-  precioMax: 0 | 1 | 2 | 3;
-  minRating: 0 | 1 | 2 | 3 | 4 | 5;
+  precioMin: 0 | 1 | 2 | 3 | 4;
+  precioMax: 0 | 1 | 2 | 3 | 4;
+  minRating: 0 | 1 | 2 | 3 | 4 | 4 | 5;
   tipos: TipoLugar[];
   q: string;
   tags: string[];

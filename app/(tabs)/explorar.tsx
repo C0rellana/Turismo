@@ -13,8 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CategoryTabs } from '@/components/CategoryTabs';
 import { LugarCard } from '@/components/LugarCard';
+import { RegionBadge } from '@/components/RegionBadge';
 import { SearchPill } from '@/components/SearchPill';
 import { SkeletonRow } from '@/components/Skeleton';
+import { colors, fonts } from '@/constants/theme';
 import { useNearbyLugares } from '@/hooks/useNearbyLugares';
 import type { Lugar } from '@/lib/types';
 import { useLocationStore } from '@/stores/useLocationStore';
@@ -52,8 +54,13 @@ export default function Explorar() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.headerWrap}>
-        <Text style={styles.titulo}>Explorar</Text>
-        <Text style={styles.sub}>Lugares turísticos fijos</Text>
+        <View style={styles.headerTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.titulo}>Explorar</Text>
+            <Text style={styles.sub}>Lugares turísticos fijos</Text>
+          </View>
+          <RegionBadge compacto />
+        </View>
       </View>
 
       <SearchPill value={q} onChange={setQ} placeholder="Museos, parques, restaurantes..." />
@@ -119,10 +126,11 @@ export default function Explorar() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.bgSoft },
   headerWrap: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-  titulo: { fontSize: 26, fontWeight: '800', color: '#111' },
-  sub: { fontSize: 13, color: '#777', marginTop: 2 },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  titulo: { fontSize: 26, color: colors.text, fontFamily: fonts.display },
+  sub: { fontSize: 13, color: colors.textMuted, marginTop: 2, fontFamily: fonts.body },
   empty: { alignItems: 'center', padding: 40, gap: 8 },
   emptyTxt: { fontSize: 15, color: '#666', fontWeight: '600' },
   emptySub: { fontSize: 13, color: '#999', textAlign: 'center' },

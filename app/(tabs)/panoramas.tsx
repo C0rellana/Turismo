@@ -13,9 +13,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CategoryTabs } from '@/components/CategoryTabs';
 import { LugarCard } from '@/components/LugarCard';
+import { RegionBadge } from '@/components/RegionBadge';
 import { SearchPill } from '@/components/SearchPill';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SkeletonRow } from '@/components/Skeleton';
+import { colors, fonts } from '@/constants/theme';
 import { useNearbyLugares } from '@/hooks/useNearbyLugares';
 import { usePanoramasProximos } from '@/hooks/usePanoramasProximos';
 import { useTopFavoritos } from '@/hooks/useTopFavoritos';
@@ -84,8 +86,13 @@ export default function Panoramas() {
         ListHeaderComponent={
           <>
             <View style={styles.headerWrap}>
-              <Text style={styles.titulo}>Panoramas</Text>
-              <Text style={styles.sub}>Eventos y actividades casuales con fecha</Text>
+              <View style={styles.headerTop}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.titulo}>Panoramas</Text>
+                  <Text style={styles.sub}>Eventos y actividades con fecha</Text>
+                </View>
+                <RegionBadge compacto />
+              </View>
             </View>
             <SearchPill value={q} onChange={setQ} placeholder="Buscar panoramas..." />
             <CategoryTabs />
@@ -173,11 +180,12 @@ export default function Panoramas() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.bgSoft },
   headerWrap: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-  titulo: { fontSize: 26, fontWeight: '800', color: '#111' },
-  sub: { fontSize: 13, color: '#777', marginTop: 2 },
-  listTitle: { fontSize: 18, fontWeight: '800', color: '#111' },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  titulo: { fontSize: 26, color: colors.text, fontFamily: fonts.display },
+  sub: { fontSize: 13, color: colors.textMuted, marginTop: 2, fontFamily: fonts.body },
+  listTitle: { fontSize: 18, color: colors.text, fontFamily: fonts.display },
   hScroll: { paddingHorizontal: 16 },
   empty: { alignItems: 'center', padding: 40, gap: 8 },
   emptyTxt: { fontSize: 15, color: '#666', fontWeight: '600' },

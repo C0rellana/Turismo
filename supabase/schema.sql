@@ -23,7 +23,8 @@ create table if not exists lugares (
   nombre text not null,
   descripcion text,
   categoria text not null check (categoria in
-    ('gastronomia', 'aire_libre', 'cultura', 'nocturno', 'familiar', 'deporte')),
+    ('gastronomia', 'aire_libre', 'cultura', 'nocturno', 'familiar', 'deporte',
+     'musica', 'bienestar', 'compras', 'eco')),
   tipo tipo_lugar not null default 'panorama',
   precio_nivel smallint not null default 1 check (precio_nivel between 0 and 3),
   direccion text,

@@ -17,8 +17,11 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { DenunciarBtn } from '@/components/DenunciarBtn';
 import { LugarCard } from '@/components/LugarCard';
+import { MediaView, VideoBadge } from '@/components/MediaView';
 import { RatingStars } from '@/components/RatingStars';
+import { TAGS_MAP } from '@/constants/tags';
 import { CATEGORIAS_MAP } from '@/constants/categories';
 import { useLugaresCreador } from '@/hooks/useLugaresCreador';
 import { useLugaresSimilares } from '@/hooks/useLugaresSimilares';
@@ -147,13 +150,26 @@ export default function Detalle() {
     void Linking.openURL(url);
   };
 
-  const compartir = () => {
+  const compartir = async () => {
     if (!lugar) return;
     const url = `https://magical-planet.vercel.app/lugar/${lugar.id}`;
-    void Share.share({
-      message: `Mira este lugar: ${lugar.nombre} - ${lugar.direccion ?? ''}\n${url}`,
-      url,
-    });
+    const texto = `Mira este lugar: ${lugar.nombre}${lugar.direccion ? ` - ${lugar.direccion}` : ''}`;
+    try {
+      if (Platform.OS === 'web') {
+        if (typeof navigator !== 'undefined' && (navigator as any).share) {
+          await (navigator as any).share({ title: lugar.nombre, text: texto, url });
+        } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+          await navigator.clipboard.writeText(url);
+          Alert.alert('Link copiado', url);
+        } else {
+          window.open(`https://wa.me/?text=${encodeURIComponent(`${texto}\n${url}`)}`, '_blank');
+        }
+      } else {
+        await Share.share({ message: `${texto}\n${url}`, url });
+      }
+    } catch (e) {
+      console.warn('[share]', e);
+    }
   };
 
   const enviarReview = async () => {
@@ -234,7 +250,15 @@ export default function Detalle() {
               setIdxGaleria(idx);
             }}
             renderItem={({ item }) => (
-              <Image source={{ uri: item.url }} style={[styles.hero, { width: screenW }]} contentFit="cover" />
+              <View style={[styles.hero, { width: screenW }]}>
+                <MediaView
+                  url={item.url}
+                  tipo={(item.tipo as any) ?? 'image'}
+                  thumbnail={item.thumbnail_url ?? null}
+                  style={{ width: screenW, height: 280 }}
+                />
+                {item.tipo === 'video' && <VideoBadge />}
+              </View>
             )}
           />
           {fotos.length > 1 && (
@@ -390,6 +414,32 @@ export default function Detalle() {
             </ScrollView>
           </>
         )}
+
+        {/* Características (tags) */}
+        {lugar.tags && lugar.tags.length > 0 && (
+          <View style={styles.caractSection}>
+            <Text style={styles.sectionTitle}>Características</Text>
+            <View style={styles.caractGrid}>
+              {lugar.tags.map((t) => {
+                const tagDef = TAGS_MAP[t];
+                if (!tagDef) return null;
+                return (
+                  <View
+                    key={t}
+                    style={[styles.caractChip, { backgroundColor: tagDef.color + '18', borderColor: tagDef.color + '50' }]}>
+                    <Ionicons name={tagDef.icon as any} size={14} color={tagDef.color} />
+                    <Text style={[styles.caractTxt, { color: tagDef.color }]}>{tagDef.label}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* Denunciar */}
+        <View style={styles.reportSection}>
+          <DenunciarBtn targetTipo="lugar" targetId={lugar.id} />
+        </View>
 
         {/* Reviews */}
         <View style={styles.reviewsSection}>
@@ -581,6 +631,28 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     gap: 14,
+  },
+  caractSection: {
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    gap: 10,
+  },
+  caractGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  caractChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  caractTxt: { fontSize: 12, fontWeight: '700' },
+  reportSection: {
+    marginTop: 20,
+    alignItems: 'flex-start',
   },
   summaryBox: {
     flexDirection: 'row',

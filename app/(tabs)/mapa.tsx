@@ -6,8 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CategoryTabs } from '@/components/CategoryTabs';
 import { LugarCard } from '@/components/LugarCard';
 import { MapaLeaflet } from '@/components/MapaLeaflet';
+import { RegionBadge } from '@/components/RegionBadge';
 import { SearchPill } from '@/components/SearchPill';
 import { ZonaPicker } from '@/components/ZonaPicker';
+import { colors, fonts } from '@/constants/theme';
 import { useNearbyLugares } from '@/hooks/useNearbyLugares';
 import type { Lugar, TipoLugar } from '@/lib/types';
 import { useLocationStore } from '@/stores/useLocationStore';
@@ -56,14 +58,11 @@ export default function Mapa() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.titulo}>Mapa</Text>
-        <Pressable style={styles.btnZona} onPress={() => setZonaOpen(true)}>
-          <Ionicons name="location" size={14} color="#fff" />
-          <Text style={styles.btnZonaTxt}>
-            {custom?.label ?? (ubicacion?.esDefault ? 'Santiago' : 'Mi ubicación')}
-          </Text>
-          <Ionicons name="chevron-down" size={14} color="#fff" />
-        </Pressable>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.titulo}>Mapa</Text>
+          <Text style={styles.sub}>Lugares y panoramas georeferenciados</Text>
+        </View>
+        <RegionBadge compacto />
       </View>
 
       {custom && (
@@ -138,16 +137,17 @@ export default function Mapa() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.bgSoft },
+  sub: { fontSize: 13, color: colors.textMuted, marginTop: 2, fontFamily: fonts.body },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  titulo: { fontSize: 26, fontWeight: '800', color: '#111' },
+  titulo: { fontSize: 26, color: colors.text, fontFamily: fonts.display },
   btnZona: {
     flexDirection: 'row',
     alignItems: 'center',
