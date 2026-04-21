@@ -157,6 +157,30 @@ npx vercel --prod                # deploy
 - `onAuthStateChange` dispara merge favoritos locales → Supabase
 - Publicar/reviews auth-gated. Reviews abiertas a lectura anon.
 
+## Scripts automatizados (prefiere estos)
+
+Todo lo operacional está scripteado en `scripts/`. Úsalos en vez de ejecutar comandos sueltos:
+
+- `./scripts/check-env.sh` — valida `.env`
+- `./scripts/migrate.sh [--reset] [--seed]` — schema + migrations + opcional seeds
+- `./scripts/setup-storage.sh` — crea bucket Supabase via Management API
+- `./scripts/setup-vercel.sh` — link proyecto + sync env vars
+- `./scripts/deploy.sh [--preview]` — typecheck + build + deploy
+- `./scripts/full-setup.sh [--reset-db] [--seed]` — onboard completo desde cero
+
+Requiere `.env` completo (ver `.env.example`).
+
+## MCP servers (recomendado cuando trabajes con IA)
+
+`.claude/mcp.json.example` tiene templates. Copiar a `.claude/mcp.json` y completar:
+
+- **Supabase MCP**: gestión DB + Auth + Storage sin Dashboard
+- **Vercel MCP**: deploys + env vars + logs
+- **Postgres MCP**: queries directos a la DB
+- **Filesystem**: local
+
+Con MCP activos, IA puede: ejecutar migrations, crear buckets, consultar DB, deploy prod, leer logs prod — todo sin salir del chat.
+
 ## Setup externo requerido
 
 1. Supabase: ejecutar `supabase/schema.sql` + `seed.sql` en SQL Editor

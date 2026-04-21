@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "${SUPABASE_ACCESS_TOKEN}",
+        "--project-ref",
+        "${SUPABASE_PROJECT_REF}"
+      ],
+      "description": "Supabase MCP: gestión de proyectos, ejecución SQL, Storage, Auth."
+    },
+    "vercel": {
+      "command": "npx",
+      "args": ["-y", "@vercel/mcp-server@latest"],
+      "env": {
+        "VERCEL_ACCESS_TOKEN": "${VERCEL_TOKEN}"
+      },
+      "description": "Vercel MCP: deploys, env vars, logs."
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "${SUPABASE_DB_URL}"],
+      "description": "Postgres MCP: consultas directas a la BD."
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/usuario/magical-planet"
+      ],
+      "description": "Filesystem local (ajustar path)."
+    }
+  }
+}

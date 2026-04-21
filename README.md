@@ -46,16 +46,22 @@ Plataforma web + mobile para **descubrir turismo** en Chile. Arranque enfocado e
 - Cuenta Supabase
 - Mobile: Expo Go o build EAS
 
-## Setup local
+## Setup rápido
 
 ```bash
-git clone https://github.com/C0rellana/Turismo.git magical-planet
+git clone <repo> magical-planet
 cd magical-planet
-nvm use 22.10.0
-npm install
+nvm use 22
 cp .env.example .env
-# editar .env con credenciales Supabase
+# editar .env con credenciales (ver SETUP.md para obtenerlas)
+
+./scripts/full-setup.sh --seed   # deps + migrations + storage + vercel
 ```
+
+Onboarding completo + credenciales: [SETUP.md](SETUP.md)
+Contribuir: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Setup local manual
 
 ### `.env`
 

@@ -1,0 +1,70 @@
+# .gitlab-ci.yml — pipeline básico para magical-planet
+# Variables a configurar en GitLab → Settings → CI/CD → Variables:
+#   VERCEL_TOKEN, EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY
+
+image: node:22
+
+stages:
+  - quality
+  - build
+  - deploy
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - .expo/
+
+install:
+  stage: quality
+  script:
+    - npm ci
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+
+typecheck:
+  stage: quality
+  needs: [install]
+  script:
+    - npx tsc --noEmit
+
+lint:
+  stage: quality
+  needs: [install]
+  script:
+    - npx expo lint
+  allow_failure: true
+
+build-web:
+  stage: build
+  needs: [install, typecheck]
+  script:
+    - npx expo export --platform web
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 day
+  only:
+    - main
+    - merge_requests
+
+deploy-preview:
+  stage: deploy
+  needs: [build-web]
+  script:
+    - npx --yes vercel@latest --yes --token=$VERCEL_TOKEN
+  only:
+    - merge_requests
+
+deploy-prod:
+  stage: deploy
+  needs: [build-web]
+  script:
+    - npx --yes vercel@latest --prod --yes --token=$VERCEL_TOKEN
+  only:
+    - main
+  environment:
+    name: production
+    url: https://magical-planet.vercel.app
