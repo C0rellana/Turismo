@@ -6,7 +6,19 @@ import { colors, fonts } from '@/constants/theme';
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  const bottomPad = Platform.OS === 'web' ? 8 : Math.max(insets.bottom, 8);
+
+  const isMobileWeb =
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    window.innerWidth < 900;
+
+  // iPhone home indicator ~34px, Android gesture bar ~24-34px
+  const bottomPad =
+    Platform.OS === 'web'
+      ? isMobileWeb
+        ? 34
+        : 10
+      : Math.max(insets.bottom, 10);
 
   return (
     <Tabs
@@ -16,43 +28,53 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: {
           fontFamily: fonts.bodyMedium,
-          fontSize: 11,
+          fontSize: 10,
+          lineHeight: 13,
+          marginTop: 0,
           marginBottom: 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 2,
+          marginBottom: 0,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
         tabBarStyle: {
           borderTopColor: colors.borderSoft,
+          borderTopWidth: 1,
           backgroundColor: colors.surface,
           paddingBottom: bottomPad,
           paddingTop: 6,
-          height: 56 + bottomPad,
+          height: 58 + bottomPad,
         },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Inicio',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="explorar"
         options={{
           title: 'Explorar',
-          tabBarIcon: ({ color, size }) => <Ionicons name="compass" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="compass" color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="mapa"
         options={{
           title: 'Mapa',
-          tabBarIcon: ({ color, size }) => <Ionicons name="map" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="map" color={color} size={22} />,
         }}
       />
       <Tabs.Screen
         name="panoramas"
         options={{
           title: 'Panoramas',
-          tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" color={color} size={22} />,
         }}
       />
       <Tabs.Screen
@@ -60,7 +82,7 @@ export default function TabsLayout() {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-circle" color={color} size={size} />
+            <Ionicons name="person-circle" color={color} size={22} />
           ),
         }}
       />
